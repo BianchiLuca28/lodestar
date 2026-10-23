@@ -30,7 +30,7 @@
 
 - **Financial plan:** `Piano_Finanziario_Luca.md` v3.1 (7 September 2026). Becomes `config/plan.md`; the rules in §6.2 cite its sections.
 
-- **Data:** `SituazionePatrimoniale.xlsx`, 7 sheets, 282 ledger rows (29/11/2025 – 31/08/2026). Imported in v0.1; kept in `data/`, never committed.
+- **Data:** `SituazionePatrimoniale.xlsx`, 7 sheets, 282 ledger rows (29/11/2025 – 31/08/2026). Imported once in v0.1 (see §5 Initial import); never committed, and no longer needed after the import.
 
 - **Course notes:** Coletti, “Educati e Finanziati”, about 114 pages. Go in `knowledge/`, never committed.
 
@@ -77,7 +77,7 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 |-----|------------------------------|-----------------------------------------------------------------------------------------------------------------------|---------------------------|
 | F1  | Repo and agent setup         | `CLAUDE.md`, `CONTEXT.md`, ADRs, CI, eval harness, config skeleton                                                    | v0.0                      |
 | F2  | Multi-account ledger         | One flat transactions table; Intesa, Fineco, Contanti, Revolut, Poste, etc. as configured accounts                    | v0.1                      |
-| F3  | Spreadsheet import           | One-time import of all 7 sheets (282 rows, trades, watchlist, planned expenses) + the 01/03/2026 adjustment           | v0.1                      |
+| F3  | Spreadsheet import           | One-time import of all 7 sheets (282 rows, trades, watchlist, planned expenses) + the 01/03/2026 adjustment; flat CSV also accepted | v0.1                      |
 | F4  | Manual entry and editing     | Add, edit, delete lines in the web app                                                                                | v0.1                      |
 | F5  | Balance check                | Enter a real account balance, see the gap, confirm an adjustment line                                                 | v0.1                      |
 | F6  | Telegram input via AWS relay | Text, photos, files sent to the bot are queued in AWS until the PC pulls them                                         | v0.2                      |
@@ -177,7 +177,15 @@ Field usage measured on the current sheet (282 rows, 29/11/2025 – 31/08/2026) 
 
 **Starting values from the sheet.** Accounts: Intesa Sanpaolo (default), Fineco, Contanti, Poste Italiane, Revolut, Trade Republic (Unicredit appears only in the older “LOG EU” sheet). Categories: 💼 Stipendio, 🛒 Supermercato, 🍸 Cibo fuori / Bevute, 🚙 Auto, 🎾 Sport, 🏠 Casa, 🏠 Affitto, 👕 Abbigliamento, 🔁 Abbonamenti, 🎉 Divertimento, 📈 Investimenti, 🎁 Regali, ✈️ Viaggi, 💇 Cura / Benessere, 🚊 Trasporto pubblico, ⚕️ Salute, 🎭 Cultura, 💻 Tecnologia, 📦 Amazon, 📦 Altro. The importer keeps each row's original category and subcategory; rows with both accounts set are transfers and drop out of income/expense stats automatically.
 
-**Import mapping (one-time).**
+**Initial import (one-time).** The ledger is seeded once from a file, through one loader per format, both producing the same rows with `source = import`:
+
+- **XLSX loader:** the 7-sheet spreadsheet, mapped as below.
+
+- **CSV loader:** a flat ledger with one row per transaction and the `transactions` columns (date, amount, from_account, to_account, category, subcategory, note, tag, exclude_from_stats), the same layout as the Movimenti CSV export. Used for the fake ledger in `config.example/` and by anyone not coming from the Sheet.
+
+Once the import is committed, the database is the only copy that matters (ADR 0001): Lodestar never reads the file again, and the user may delete it. The import runs into an empty ledger only; a second run is refused.
+
+**XLSX import mapping.**
 
 - “Log EntrateUscite” → `transactions` (the older “LOG EU” and “DA COPIARE” are checked for rows not already present).
 
@@ -385,7 +393,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 - Schema + Alembic migrations; config loaders with Pydantic validation
 
-- Importer for the 7-sheet xlsx, with a dry-run report and the 01/03/2026 adjustment
+- Initial importer with XLSX (7-sheet) and CSV loaders, a dry-run report and the 01/03/2026 adjustment; runs once into an empty ledger
 
 - Movimenti page: table, filters, add/edit, export
 
@@ -487,6 +495,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 | 0012 | English code and prompts, Italian UI, EUR only                                | Italian everywhere                         | Better model instruction-following; wider open-source audience        |
 | 0013 | AGPL-3.0, single user per install, personal data outside git                  | MIT; multi-tenant                          | Prevents closed SaaS forks; keeps scope small                         |
 | 0014 | Six pages maximum                                                             | Feature-per-page growth                    | Usability over completeness                                           |
+| 0015 | One-time initial import from XLSX or CSV, one loader per format; file not kept | Keep the source file as an input; XLSX only | The database is the only truth; CSV opens the app to non-Sheet users  |
 
 ## 14. Risks and open points
 
@@ -526,7 +535,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 **What goes into the repo before the first coding session**
 
-- This document as `docs/design.md`. Markdown export drops the two diagrams, so also commit a PDF export as `docs/design.pdf`.
+- This document as `docs/design.md`, with its diagrams in `docs/img/`.
 
 - `CLAUDE.md`, `CONTEXT.md` and ADRs 0001–0014, generated from this document (§12, §13).
 

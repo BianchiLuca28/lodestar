@@ -38,6 +38,10 @@ A flag that keeps an extraordinary transaction (inheritance, internal movements 
 **Source**:
 How a transaction entered the ledger: manual, telegram, receipt, bank_xlsx, import, adjustment.
 
+**Initial import** (_Importazione iniziale_):
+The one-time seeding of an empty ledger from a file (the 7-sheet XLSX or a flat CSV), through one loader per format. Its rows get source `import`; afterwards the file is no longer needed.
+_Avoid_: sync, re-import
+
 **Balance check** (_Verifica saldo_):
 The user's real balance of one account on one date, compared with the balance computed from the ledger.
 
