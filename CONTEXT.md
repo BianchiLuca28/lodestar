@@ -104,6 +104,18 @@ A buy or sell of an instrument on a date, with quantity, price and fees. Each tr
 **Position** (_Posizione_):
 The quantity of an instrument currently held in an account, derived from trades.
 
+**Coupon** (_Cedola_):
+Periodic interest paid by a bond, received net of tax as an income to the broker account, excluded from stats. Coupons in P3 are never spent; they go into the next quarterly order.
+
+**Accrued interest** (_Rateo_):
+Interest built up since a bond's last coupon, paid to the seller on purchase and recovered with the next coupon. Stored on the trade.
+
+**Quarterly order** (_Ordine trimestrale_):
+The single P3 bond purchase placed at the end of January, April, July and October, alternating Italian and German bonds (ADR 0016).
+
+**Expected house date**:
+The date P3 must be fully liquid by; every P3 bond matures on or before it. Set in config, reviewed every January.
+
 **Instrument policy** (_Policy strumenti_):
 The user's written list of instruments and constraints allowed per bucket, plus a blacklist; the only universe the agent may suggest from.
 

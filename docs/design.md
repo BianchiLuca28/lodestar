@@ -6,7 +6,7 @@
 
 **Lodestar started from Luca's brainstorm on 12 October 2026: an expense tracker that is his own rather than generic, built to keep a 25-year-old on his plan to buy a house in 2032.** The design was settled in a question-by-question review on 12–13 October 2026; every decision is recorded in this document and listed in §13.
 
-**The owner.** Luca, 25, Data Engineer in Italy. Net salary about €1,813/month, savings rate about 46%. Passive long-term investor following Prof. Paolo Coletti's four-pillar method (course notes “Educati e Finanziati”); never trades on market moves. Wants to learn AI engineering by building, some AWS, and how to develop with a coding agent, at near-zero cost. Hardware: a Windows PC with a 16 GB GPU running Ollama (gpt-oss, qwen3:8b and similar).
+**The owner.** Luca, 25, Data Engineer in Italy. Net salary about €1,784/month, savings rate about 48% (March–September 2026). Passive long-term investor following Prof. Paolo Coletti's four-pillar method (course notes “Educati e Finanziati”); never trades on market moves. Wants to learn AI engineering by building, some AWS, and how to develop with a coding agent, at near-zero cost. Hardware: a Windows PC with a 16 GB GPU running Ollama (gpt-oss, qwen3:8b and similar).
 
 **The original idea, as proposed, and where each point landed**
 
@@ -28,20 +28,22 @@
 
 **Source material**
 
-- **Financial plan:** `Piano_Finanziario_Luca.md` v3.1 (7 September 2026). Becomes `config/plan.md`; the rules in §6.2 cite its sections.
+- **Financial plan:** finalized 31/10/2026 as `config/plan.md`, the English operational version of `Piano_Finanziario_Luca.md`. The rules in §6.2 cite its sections; where this document and the plan disagree on a figure, the plan wins.
 
-- **Data:** `SituazionePatrimoniale.xlsx`, 7 sheets, 282 ledger rows (29/11/2025 – 31/08/2026). Imported once in v0.1 (see §5 Initial import); never committed, and no longer needed after the import.
+- **Data:** `SituazionePatrimoniale.xlsx`, 7 sheets, ledger rows from 29/11/2025 (282 rows up to 31/08/2026), given one last update right before the import. Imported once in v0.1 (see §5 Initial import); never committed, and no longer needed after the import.
 
 - **Course notes:** Coletti, “Educati e Finanziati”, about 114 pages. Go in `knowledge/`, never committed.
 
-**Luca's buckets (from plan §4.2)**
+**Luca's buckets (from plan §3–§4, November 2026)**
 
-| Bucket             | Purpose                                        | Where                                         | Capital | Monthly | Risk  |
-|--------------------|------------------------------------------------|-----------------------------------------------|---------|---------|-------|
-| P1 Liquidità       | Current spending + buffer                      | Intesa Sanpaolo                               | €3,000  | —       | 0/10  |
-| P2 Fondo emergenza | ~7 months of spending                          | XEON on Fineco                                | €7,951  | —       | 0/10  |
-| P3 Casa            | Down payment + costs, Dec 2032, target €62,000 | Bonds on Fineco (instrument open)             | €16,000 | €500    | 2/10  |
-| P4 Lungo termine   | 25+ years                                      | Global equity ETF on Fineco (instrument open) | €4,328  | €400    | 10/10 |
+| Bucket             | Purpose                                        | Where                                                         | Capital  | Monthly                   | Risk  |
+|--------------------|------------------------------------------------|---------------------------------------------------------------|----------|---------------------------|-------|
+| P1 Liquidità       | Current spending + buffer                      | Intesa Sanpaolo                                               | €3,000   | —                         | 0/10  |
+| P2 Fondo emergenza | ≥ 7 months of spending                         | XEON on Fineco (53 units)                                     | ~€7,936  | —                         | 0/10  |
+| P3 Casa            | Down payment + costs, end 2032, target €62,000 | 6 Italian and German government bonds on Fineco, 2030–2032    | ~€16,766 | €500, one order a quarter | 2/10  |
+| P4 Lungo termine   | 25+ years                                      | VWCE on Fineco (EIMI possible above €10,000, to be confirmed) | ~€4,730  | €400 ETF plan on day 5    | 10/10 |
+
+The €900 monthly contribution leaves Intesa for Fineco by standing transfer on day 2.
 
 ## 1. Vision and principles
 
@@ -88,10 +90,10 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 | F11 | Portfolio                    | Trades, positions, prices (yfinance + MOT scraper + manual), buckets vs target                                        | v0.3                      |
 | F12 | Bank XLSX import             | Import Intesa/Fineco XLSX exports; de-duplicate against the ledger; unsure matches become drafts                      | v0.4                      |
 | F13 | Receipt photos               | A small VLM reads a receipt and makes a draft (model chosen later)                                                    | v0.4                      |
-| F14 | Rules engine                 | `rules.yaml` checked by code: €700 discretionary cap, valve, P1 range, contributions, P3 trajectory                   | v0.5                      |
+| F14 | Rules engine                 | `rules.yaml` checked by code: €700 discretionary cap, valve, P1 range, contributions, P3 orders and maturities, trajectory | v0.5                      |
 | F15 | Rules form                   | “Regole” form on the Piano page writes `rules.yaml`                                                                   | v0.5                      |
 | F16 | Planned expenses             | Car €10,000, phone €300 and future ones, with expected date and status                                                | v0.5                      |
-| F17 | Plan agent                   | Explains rule status, says when a bond purchase is due, ranks candidates within your instrument policy                | v0.5                      |
+| F17 | Plan agent                   | Explains rule status, says when a bond order is due and which bond the plan's alternation rule picks (ADR 0016)       | v0.5                      |
 | F18 | Notifications                | Monthly digest (required) + event alerts (optional) on Telegram                                                       | v0.5                      |
 | F19 | Knowledge base (RAG)         | Coletti material (~114 pages) indexed locally, cited in answers                                                       | v0.6                      |
 | F20 | Chat                         | One chat over ledger, portfolio, rules, plan and knowledge base                                                       | v0.6                      |
@@ -119,6 +121,8 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 - **No automatic writes.** Nothing the AI produces reaches the ledger without approval.
 
 - **No redistribution of course material.** The Coletti documents stay on each user's disk.
+
+- **No pension fund tracking.** The Cometa supplementary pension is outside the four pillars and is never tracked, valued or asked about (ADR 0017).
 
 ## 4. Architecture
 
@@ -165,8 +169,8 @@ Field usage measured on the current sheet (282 rows, 29/11/2025 – 31/08/2026) 
 | `transactions`     | id, date, amount, from_account, to_account, category, subcategory, note, tag, exclude_from_stats, source, created_at | `source` = manual · telegram · receipt · bank_xlsx · import · adjustment          |
 | `drafts`           | id, status, payload (proposed lines as JSON), origin message, confidence, dedupe_hint, created_at                    | status = pending · approved · rejected; approval copies lines into `transactions` |
 | `inbound_messages` | id, telegram_update_id, kind (text/photo/document/callback), body or S3 key, received_at, processed_at               | Raw queue drained from the AWS relay; idempotent on `telegram_update_id`          |
-| `trades`           | id, date, instrument_id, side, quantity, price, fees, account, transaction_id                                        | Each trade creates its linked cash line (excluded from stats)                     |
-| `instruments`      | id, ticker, isin, name, asset_class, tax_rate, price_provider, bucket                                                | Asset class: equity ETF, money-market ETF, govt bond, etc.; tax 12.5% or 26%      |
+| `trades`           | id, date, instrument_id, side, quantity, price, accrued_interest, fees, account, transaction_id                      | Bonds: quantity = nominal, price in % of nominal, value = nominal × price ÷ 100. ETFs: units and € price. Each trade creates its linked cash line (clean value + accrued interest, excluded from stats); fees and stamp duty are separate expense lines that count as spending |
+| `instruments`      | id, ticker, isin, name, asset_class, tax_rate, price_provider, bucket, maturity, coupon_rate, coupon_dates           | Asset class: equity ETF, money-market ETF, govt bond; tax 12.5% (govt bonds) or 26% (ETFs); bond maturity and coupons drive the calendar alerts. Coupons and redemptions are incomes to Fineco, excluded from stats |
 | `prices`           | instrument_id, date, price, source                                                                                   | Daily refresh at startup                                                          |
 | `buckets`          | defined in config                                                                                                    | Your 4 pillars: name, purpose, risk, target, monthly contribution, horizon        |
 | `planned_expenses` | id, name, amount, expected_date (nullable), status, note                                                             | From the “Spese di Emergenza” sheet                                               |
@@ -189,13 +193,13 @@ Once the import is committed, the database is the only copy that matters (ADR 00
 
 - “Log EntrateUscite” → `transactions` (the older “LOG EU” and “DA COPIARE” are checked for rows not already present).
 
-- “Log Transazioni” → `trades` + `instruments` (XEON 53 @ 149.7419 on 29/07/2026; the other tickers become watchlist instruments with no position).
+- “Log Transazioni” → `trades` + `instruments`: XEON (53 @ 149.7419 on 29/07/2026), the 6 government bonds of 29/10/2026 (Sheet quantity = nominal ÷ 100, converted back to nominal) and VWCE; tickers with no trade become watchlist instruments.
 
 - “Patrimonio”, “EU”, “Dati e Calcoli” → not imported: they are computed views that Lodestar recomputes. Tag list and asset-class list seed the config.
 
 - “Spese di Emergenza” → `planned_expenses`.
 
-- Adds the 01/03/2026 “Riallineamento saldi” adjustment the plan requires (€7,747.57), then a balance check per account against 31/08/2026.
+- Adds the 01/03/2026 “Riallineamento saldi” adjustment the plan requires (€7,747.57), then a balance check per account against the date of the Sheet's last update.
 
 ## 6. AI design
 
@@ -229,19 +233,24 @@ Dates: “oggi” by default; “ieri”, “sabato”, “il 3” resolved rela
 
 ### 6.2 Rules engine (v0.5)
 
-**Code computes, the LLM explains.** `rules.yaml` holds typed rules; a Python evaluator returns a status (ok · warning · breach) and the numbers behind it. Initial rules, from plan v3.1 and your own:
+**Code computes, the LLM explains.** `rules.yaml` holds typed rules; a Python evaluator returns a status (ok · warning · breach) and the numbers behind it. Initial rules, from the finalized plan (31/10/2026); “Plan §” refers to `config/plan.md`:
 
-| Rule              | Check                                                                                | Source    |
-|-------------------|--------------------------------------------------------------------------------------|-----------|
-| Discretionary cap | Discretionary spending this month ≤ €700 (categories marked discretionary in config) | Your rule |
-| P1 range          | Intesa between €1,500 and €3,500                                                     | Plan §15  |
-| Safety valve      | Intesa \< €1,500 → next month's contributions halve (250 + 200)                      | Plan §5.3 |
-| Surplus           | End of quarter, Intesa \> €3,000 → excess to P3 (until 2029) or P4                   | Plan §5.2 |
-| Contributions     | €500 to P3 and €400 to P4 left Intesa this month                                     | Plan §5.1 |
-| Uninvested cash   | Cash on Fineco assigned to P3/P4 not invested after N days → “bond/ETF purchase due” | Plan §1.2 |
-| P3 trajectory     | P3 value vs the §7 projection for that date                                          | Plan §7   |
-| Emergency fund    | P2 ≥ 7 months of average spending                                                    | Plan §4.4 |
-| Never touch P2/P4 | Any outflow from P2 or P4 accounts raises a warning                                  | Plan §13  |
+| Rule                  | Check                                                                                                         | Source               |
+|-----------------------|---------------------------------------------------------------------------------------------------------------|----------------------|
+| Discretionary cap     | Discretionary spending this month, net of refunds in the same category, ≤ €700 (categories flagged in config) | Plan §6.7            |
+| P1 range              | Intesa between €1,500 and €3,500                                                                              | Plan §6.2, §7.1      |
+| Safety valve          | Intesa \< €1,500 → next month's transfer halves (€250 to P3 + €200 to P4)                                     | Plan §6.2            |
+| Surplus               | End of quarter, Intesa \> €3,500 → excess over €3,000 to P3 (until end of 2029) or P4 (from 2030)              | Plan §6.2            |
+| Contributions         | €900 transfer Intesa → Fineco by day 2; €400 VWCE plan executed by day 5 (from December 2026)                 | Plan §5              |
+| Quarterly P3 order    | End of Jan/Apr/Jul/Oct: one order with the P3 cash on Fineco (contributions + coupons − orders placed)         | Plan §6.4 P3-3       |
+| Maturity reinvestment | A P3 bond that matured is reinvested within 30 days                                                           | Plan §6.4 P3-5       |
+| P3 horizon            | Every P3 bond matures on or before the expected house date; under 12 months away → new money to XEON          | Plan §6.4 P3-1, P3-2 |
+| P3 trajectory         | P3 value vs the projection for that date; warning when more than €3,000 below                                 | Plan §10             |
+| Emergency fund        | P2 ≥ 7 months of average spending (12-month average)                                                          | Plan §6.3            |
+| Never touch P2/P4     | Any outflow from P2 or P4 raises a warning                                                                    | Plan §6.1            |
+| P4 review threshold   | P4 above €10,000 → ask whether to start EIMI (360 VWCE + 40 EIMI); never applied automatically                | Plan §6.5            |
+
+The expected house date lives in `buckets.yaml` (P3 horizon) and is reviewed every January; the P3 rules read it from there.
 
 The Regole form on the Piano page edits these values; the YAML stays hand-editable and validated by a Pydantic schema.
 
@@ -249,7 +258,9 @@ The Regole form on the Piano page edits these values; the YAML stays hand-editab
 
 A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (parameterised queries, never free SQL), `get_portfolio`, `get_planned_expenses`, `read_plan_section`, `search_instruments`. It produces the monthly digest and answers “what should I do this month?”.
 
-**Instrument policy** (`instrument_policy.yaml`, written by you): allowed asset classes per bucket, issuers, maturity window (2031–2033 for P3), preferences (low coupon, single government bonds over bond ETFs for the 12.5% tax) and the §9.4 blacklist. When a purchase is due, the agent fetches candidates allowed by the policy, ranks them by net yield to maturity in code, and explains the top few. It never cites price trends; the system prompt and a post-check both enforce this.
+**Instrument policy** (`instrument_policy.yaml`, written by you, from plan §6.4, §6.5 and §6.9): per bucket the allowed instruments (P2 XEON; P3 Italian and German fixed-rate government bonds, single repayment, price below 100, frequently traded, maturing on or before the expected house date; P4 VWCE, plus EIMI only once confirmed), and the never-buy list (BTP Valore/Italia/Più, inflation-linked, CCT, French, Belgian and Austrian bonds, bond ETFs, thematic, single-country and leveraged ETFs, single stocks, crypto, commodities, insurance products).
+
+**Which bond to buy** follows the plan's rule, computed in code (ADR 0016): one order a quarter, alternating BTP and Bund on the furthest pair that matures on or before the expected house date (today BTP-15NV32 and Bund-15FB32), BTPs in whole lots of €1,000 nominal, the remainder waiting for the next quarter. A maturing bond is reinvested in the same country's pair. Gross yield is shown when comparing bonds (true net ≈ gross × 0.875). The agent explains the pick and the order steps (limit order, search by ISIN); it never cites price trends, and the system prompt and a post-check both enforce this.
 
 ### 6.4 Knowledge base and chat (v0.6)
 
@@ -306,7 +317,7 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 | **Inbox**       | Review AI drafts                  | Draft cards with the original message, proposed lines (editable inline), ✅/❌, “possibile duplicato” flag, bulk approve for XLSX imports           | v0.2  |
 | **Movimenti**   | The ledger                        | Filterable table (date, account, category, tag, text), inline edit, add line, export XLSX/CSV, balance check per account                            | v0.1  |
 | **Panoramica**  | How this month and this year went | Spend this month vs the €700 cap, savings rate (monthly, 12-month), net worth over time, spending by category, account balances, trip totals by tag | v0.3  |
-| **Portafoglio** | Where the money sits              | Buckets vs target allocation, positions with value and P/L, trades log, add trade                                                                   | v0.3  |
+| **Portafoglio** | Where the money sits              | Buckets vs target allocation, positions with value and P/L, bond maturities and next coupons, trades log, add trade; a show/hide toggle for P4 value and P/L, shown by default | v0.3  |
 | **Piano**       | Am I on plan?                     | Rule status as traffic lights with the numbers behind them, planned expenses, P3 trajectory vs projection, Regole form, instrument policy view      | v0.5  |
 | **Chat**        | Ask anything                      | Chat with cited sources (ledger rows, rules, plan sections, course pages)                                                                           | v0.6  |
 
@@ -314,9 +325,9 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 **Notifications (Telegram)**
 
-- **Monthly digest** (required), sent on the 1st or the first start after it: the plan's “five numbers to watch” (§15), rule status, last month's spend vs cap, anything due.
+- **Monthly digest** (required), sent on the 1st or the first start after it: the plan's “five numbers” (plan §7.1), rule status, last month's discretionary spend vs cap, anything due this month (quarterly order, coupons, maturities, January review).
 
-- **Event alerts** (optional, each toggleable): safety valve triggered, contributions missing by the 5th, uninvested P3/P4 cash, planned expense due within 60 days, rule breach.
+- **Event alerts** (optional, each toggleable): safety valve triggered, transfer missing on day 2 or ETF plan not executed by day 5, quarterly P3 order due, coupon received (goes into the next order), bond maturing within 30 days, P4 crossing €10,000 (EIMI decision), planned expense due within 60 days, rule breach.
 
 - Nothing else. The plan says to look at the portfolio once a month; the app respects that.
 
@@ -496,6 +507,8 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 | 0013 | AGPL-3.0, single user per install, personal data outside git                  | MIT; multi-tenant                          | Prevents closed SaaS forks; keeps scope small                         |
 | 0014 | Six pages maximum                                                             | Feature-per-page growth                    | Usability over completeness                                           |
 | 0015 | One-time initial import from XLSX or CSV, one loader per format; file not kept | Keep the source file as an input; XLSX only | The database is the only truth; CSV opens the app to non-Sheet users  |
+| 0016 | P3 bond orders follow the plan's alternation rule, computed in code          | Ranking candidates by net yield            | The finalized plan fixes the rule; ranking would second-guess it      |
+| 0017 | The pension fund is out of scope                                              | Track the Cometa position manually         | Hard to track, outside the pillars, not actionable in the plan        |
 
 ## 14. Risks and open points
 
@@ -519,9 +532,9 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 - Parsing model: `gpt-oss:20b` vs `qwen3:8b`, picked by eval score in v0.2.
 
-- Which categories count as “discretionary” for the €700 cap (set in `categories.yaml` before v0.5).
+- Which categories count as “discretionary” for the €700 cap: proposed in plan §6.7, to confirm and set in `categories.yaml` before v0.5.
 
-- Instrument policy content (you write it before v0.5; depends on the plan's open points A and B).
+- Instrument policy file: derived from plan §6.4, §6.5 and §6.9 before v0.5.
 
 - AWS SAM vs Terraform for the relay (decide at the start of v0.2).
 
