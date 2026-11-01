@@ -1,20 +1,23 @@
 from importlib.metadata import version
+from pathlib import Path
 
 import httpx
 import pytest
 import respx
 from fastapi.testclient import TestClient
 
+from lodestar.config.loader import load_config
 from lodestar.config.settings import Settings
 from lodestar.main import create_app
 
+EXAMPLE = Path(__file__).parents[3] / "config.example"
 BASE_URL = "http://llm.test:11434"
 MODELS_URL = f"{BASE_URL}/v1/models"
 
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app(Settings(llm_base_url=BASE_URL)))
+    return TestClient(create_app(load_config(EXAMPLE), Settings(llm_base_url=BASE_URL)))
 
 
 @respx.mock
@@ -56,6 +59,6 @@ def test_health_reports_llm_unreachable_on_error_status(client: TestClient) -> N
 
 
 def test_health_schema_is_in_openapi() -> None:
-    schemas = create_app(Settings(llm_base_url=BASE_URL)).openapi()["components"]["schemas"]
+    schemas = create_app(load_config(EXAMPLE), Settings(llm_base_url=BASE_URL)).openapi()["components"]["schemas"]
 
     assert {"HealthResponse", "LlmStatus"} <= schemas.keys()
