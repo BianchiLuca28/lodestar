@@ -221,3 +221,51 @@ def test_missing_sheet_error_lists_the_sheets_found(tmp_path: Path) -> None:
     wb.save(path)
     [error] = run_import(path, EXAMPLE, tmp_path / "data", dry_run=True).errors
     assert "'Movimenti 2026'" in error and "'Log Transazioni'" in error
+
+
+def edited_config(tmp_path: Path, change: dict[str, object]) -> Path:
+    import shutil
+
+    import yaml
+
+    target = tmp_path / "config"
+    shutil.copytree(EXAMPLE, target)
+    settings = yaml.safe_load((target / "settings.yaml").read_text("utf-8"))
+    settings["initial_import"].update(change)
+    (target / "settings.yaml").write_text(yaml.safe_dump(settings, allow_unicode=True), "utf-8")
+    return target
+
+
+def test_category_matches_ignoring_spaces(tmp_path: Path) -> None:
+    from openpyxl import load_workbook
+
+    path = build_sheet(tmp_path / "s.xlsx")
+    wb = load_workbook(path)
+    wb["Log Entrate_Uscite"].append(
+        log_row("", "07/03/2026", "❓Varie", "", "€ 5,00", "", "Contanti", "")
+    )
+    wb.save(path)
+    outcome = run_import(path, EXAMPLE, tmp_path / "data", dry_run=False)
+    assert outcome.errors == []
+    assert ("❓ Varie",) in rows(
+        tmp_path / "data", "SELECT category FROM transactions WHERE date = '2026-03-07'"
+    )
+
+
+def test_ticker_overrides_beat_the_asset_label(sheet: Path, tmp_path: Path) -> None:
+    config = edited_config(
+        tmp_path,
+        {
+            "instruments": {"XEON": {"asset_class": "equity_etf", "bucket": "P4"}},
+            "skip_tickers": ["VWCE"],
+        },
+    )
+    data = tmp_path / "data"
+    outcome = run_import(sheet, config, data, dry_run=False)
+    assert outcome.errors == []
+    assert rows(data, "SELECT ticker, asset_class, bucket FROM instruments ORDER BY ticker") == [
+        ("BTP-01GN31", "govt_bond", "P3"),
+        ("XEON", "equity_etf", "P4"),
+    ]
+    assert any("VWCE" in n and "escluso" in n for n in outcome.notes)
+    assert any("BTC: operazione del 02/08/2026" in n for n in outcome.notes)
