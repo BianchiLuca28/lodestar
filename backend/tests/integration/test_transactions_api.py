@@ -43,7 +43,9 @@ def test_create_returns_line_with_direction_and_manual_source(client: TestClient
 
 
 def test_transfer_and_income_directions(client: TestClient) -> None:
-    transfer = create(client, to_account="Broker Orsa", category="📊 Investimenti", subcategory="ETF")
+    transfer = create(
+        client, to_account="Broker Orsa", category="📊 Investimenti", subcategory="ETF"
+    )
     income = create(client, from_account=None, to_account="Banca Aurora")
     assert transfer["direction"] == "transfer"
     assert income["direction"] == "income"
@@ -142,7 +144,9 @@ def test_unknown_id_is_404(client: TestClient, method: str) -> None:
         ({"to_account": "Banca Aurora"}, "error.sameAccount", "to_account"),
     ],
 )
-def test_validation_errors(client: TestClient, change: dict[str, Any], key: str, field: str) -> None:
+def test_validation_errors(
+    client: TestClient, change: dict[str, Any], key: str, field: str
+) -> None:
     response = client.post(URL, json=payload(**change))
     assert response.status_code == 422
     body = response.json()

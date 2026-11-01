@@ -34,6 +34,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Transactions */
+        get: operations["list_transactions_api_transactions_get"];
+        put?: never;
+        /** Create Transaction */
+        post: operations["create_transaction_api_transactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/transactions/{transaction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Transaction */
+        delete: operations["delete_transaction_api_transactions__transaction_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Transaction */
+        patch: operations["update_transaction_api_transactions__transaction_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -75,6 +111,20 @@ export interface components {
             /** Revision */
             revision: string | null;
         };
+        /**
+         * Direction
+         * @enum {string}
+         */
+        Direction: "expense" | "income" | "transfer";
+        /** ErrorResponse */
+        ErrorResponse: {
+            /** Key */
+            key: string;
+            /** Field */
+            field?: string | null;
+            /** Message */
+            message: string;
+        };
         /** HealthResponse */
         HealthResponse: {
             /**
@@ -93,6 +143,98 @@ export interface components {
             reachable: boolean;
             /** Base Url */
             base_url: string;
+        };
+        /** TransactionIn */
+        TransactionIn: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Amount */
+            amount: number | string;
+            /** From Account */
+            from_account?: string | null;
+            /** To Account */
+            to_account?: string | null;
+            /** Category */
+            category: string;
+            /** Subcategory */
+            subcategory?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Tag */
+            tag?: string | null;
+            /**
+             * Exclude From Stats
+             * @default false
+             */
+            exclude_from_stats: boolean;
+        };
+        /** TransactionOut */
+        TransactionOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Amount */
+            amount: string;
+            /** From Account */
+            from_account?: string | null;
+            /** To Account */
+            to_account?: string | null;
+            /** Category */
+            category: string;
+            /** Subcategory */
+            subcategory?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Tag */
+            tag?: string | null;
+            /**
+             * Exclude From Stats
+             * @default false
+             */
+            exclude_from_stats: boolean;
+            /** Id */
+            id: number;
+            direction: components["schemas"]["Direction"];
+            /** Source */
+            source: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** TransactionPage */
+        TransactionPage: {
+            /** Items */
+            items: components["schemas"]["TransactionOut"][];
+            /** Total */
+            total: number;
+        };
+        /** TransactionPatch */
+        TransactionPatch: {
+            /** Date */
+            date?: string | null;
+            /** Amount */
+            amount?: number | string | null;
+            /** From Account */
+            from_account?: string | null;
+            /** To Account */
+            to_account?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Subcategory */
+            subcategory?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Tag */
+            tag?: string | null;
+            /** Exclude From Stats */
+            exclude_from_stats?: boolean | null;
         };
     };
     responses: never;
@@ -139,6 +281,213 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigResponse"];
+                };
+            };
+        };
+    };
+    list_transactions_api_transactions_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                account?: string | null;
+                category?: string | null;
+                tag?: string | null;
+                q?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionPage"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_transaction_api_transactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransactionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_transaction_api_transactions__transaction_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_transaction_api_transactions__transaction_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransactionPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
