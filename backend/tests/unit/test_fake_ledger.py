@@ -94,3 +94,16 @@ def test_refunds_trip_tag_and_excluded_rows() -> None:
 def test_same_seed_reproduces_the_committed_file() -> None:
     generate = load_generator()
     assert generate(2026).encode("utf-8") == LEDGER.read_bytes()
+
+
+def test_every_account_ends_with_a_positive_balance() -> None:
+    from collections import defaultdict
+    from decimal import Decimal
+
+    balance: dict[str, Decimal] = defaultdict(Decimal)
+    for r in rows():
+        if r["to_account"]:
+            balance[r["to_account"]] += Decimal(r["amount"])
+        if r["from_account"]:
+            balance[r["from_account"]] -= Decimal(r["amount"])
+    assert all(v > 0 for v in balance.values()), dict(balance)
