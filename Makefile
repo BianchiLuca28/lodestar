@@ -5,7 +5,7 @@ FRONTEND := frontend
 CONFIG ?= config
 DATA ?= data
 
-.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate import demo dev-demo
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate import demo dev-demo backup restore
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
@@ -50,3 +50,9 @@ demo: ## Rebuild data-demo/ from the fake persona (config.example + ledger.csv)
 
 dev-demo: ## Run the stack on the fake persona (run `make demo` first); UI on http://127.0.0.1:8080
 	LODESTAR_CONFIG=./config.example LODESTAR_DATA=./data-demo docker compose up --build
+
+backup: ## Back up the database now into the folder from settings.yaml (the app also does it daily)
+	cd $(BACKEND) && uv run python -m lodestar.jobs.backup now --config "$(abspath $(CONFIG))" --data "$(abspath $(DATA))"
+
+restore: ## Restore a backup: make restore FILE=data/backups/lodestar-YYYYMMDD-HHMMSS.db (stop the app first)
+	cd $(BACKEND) && uv run python -m lodestar.jobs.backup restore "$(abspath $(FILE))" --data "$(abspath $(DATA))"

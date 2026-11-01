@@ -12,7 +12,7 @@ A lodestar is the star you navigate by. Here the star is your written financial 
 
 - **Log expenses in plain language.** Message a Telegram bot ("cena da Zi Nenè 50€, Marco me ne ha ridati 25") and get ready-made ledger lines back.
 - **You approve everything.** AI output is always a draft; one tap to accept, reject or correct.
-- **Runs on your machine.** Data, LLMs and embeddings stay local (Ollama). The cloud only relays raw messages and stores encrypted backups.
+- **Runs on your machine.** Data, LLMs and embeddings stay local (Ollama). The cloud only relays raw messages and, from v0.2, stores encrypted backups.
 - **Checks your plan.** Rules like "discretionary spending ≤ €700/month" or "liquidity between €1,500 and €3,500" are evaluated by code every day; a local agent explains the results and tells you when a planned purchase is due.
 - **Tracks your buckets and portfolio.** Savings split into buckets (liquidity, emergency fund, house, long term) with targets, contributions and positions.
 - **Answers questions with sources.** Chat over your ledger, your plan and your own reference material, with citations.
@@ -67,6 +67,8 @@ Lodestar runs in Docker; Ollama runs natively on the host so it can use the GPU.
 2. `make dev`, then open <http://127.0.0.1:8080>. The badge in the top right shows whether the backend and the LLM are reachable.
 
 The backend needs a `config/` folder: start from the fake persona with `cp -r config.example config`, then edit the YAML files. An invalid file stops the backend with a message naming the file and the field (`docker compose logs backend`).
+
+**Backups:** the app copies the database into `data/backups/` at startup and hourly whenever the newest copy is over a day old (30 daily and 12 monthly kept). `make backup` makes one now; `make restore FILE=data/backups/lodestar-….db` puts one back after you stop the app, keeping the replaced database aside.
 
 **Try it on fake data:** `make demo` builds `data-demo/` from the fake persona in `config.example/`, then `make dev-demo` runs the stack on it. Your real `config/` and `data/` are not touched.
 
