@@ -95,10 +95,10 @@ def monthly(rng: random.Random, m: int) -> list[Row]:
     pay = lambda: rng.choice([BANK, BANK, CARD, CASH])  # noqa: E731
     rows = [
         Row(d(27), 215000, "", BANK, "💰 Stipendio", "Mensilità", "Stipendio"),
-        expense(d(1), 72000, BANK, "🏡 Affitto", "Canone", "Affitto via Saragozza"),
+        expense(d(1), 60000, BANK, "🏡 Affitto", "Canone", "Affitto via Saragozza"),
         Row(d(2), 65000, BANK, BROKER, "📊 Investimenti", "ETF", "Bonifico mensile al broker"),
-        Row(d(10), 10000, BANK, CARD, VARIE, "", "Ricarica carta"),
-        Row(d(rng.randint(5, 20)), 8000, BANK, CASH, VARIE, "", "Prelievo bancomat"),
+        Row(d(10), 20000, BANK, CARD, VARIE, "", "Ricarica carta"),
+        Row(d(rng.randint(5, 20)), 15000, BANK, CASH, VARIE, "", "Prelievo bancomat"),
         expense(
             d(rng.randint(3, 8)), rng.randint(3500, 7500), BANK, BOLLETTE, "Luce", "Bolletta luce"
         ),
