@@ -1,0 +1,34 @@
+# The four pillars of the fake plan (plan.md §4).
+buckets:
+  - id: P1
+    name: Liquidità
+    purpose: Day-to-day spending
+    risk: none
+    target: { min: 1200, max: 2800 }
+    monthly_contribution: 0
+    horizon: ongoing
+
+  - id: P2
+    name: Fondo emergenza
+    purpose: Real emergencies only
+    risk: very low
+    target: { months_of_spending: 6 }
+    monthly_contribution: 0
+    horizon: ongoing
+
+  - id: P3
+    name: Casa
+    purpose: House down payment
+    risk: low
+    target: 22000
+    monthly_contribution: 350
+    horizon: 2031-06-30
+    expected_house_date: 2031-06-30 # reviewed every January
+
+  - id: P4
+    name: Lungo termine
+    purpose: Long-term growth
+    risk: high
+    target: null
+    monthly_contribution: 300
+    horizon: 25+ years

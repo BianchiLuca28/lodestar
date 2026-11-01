@@ -14,8 +14,10 @@ dependencies = [
 dev = [
     "mypy>=1.13",
     "pytest>=8.3",
+    "pyyaml>=6.0.3",
     "respx>=0.23.1",
     "ruff>=0.8",
+    "types-pyyaml>=6.0.12.20261030",
 ]
 
 [build-system]

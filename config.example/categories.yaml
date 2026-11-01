@@ -1,0 +1,44 @@
+# Fake categories. `discretionary: true` counts toward the spending cap (plan.md §5.6).
+categories:
+  - name: 💰 Stipendio
+    discretionary: false
+    subcategories: [Mensilità, Tredicesima, Rimborso spese]
+  - name: 🥦 Spesa
+    discretionary: false
+    subcategories: [Supermercato, Mercato, Panificio]
+  - name: 🍝 Ristoranti
+    discretionary: true
+    subcategories: [Trattoria, Pizzeria, Aperitivo, Caffè]
+  - name: 🏡 Affitto
+    discretionary: false
+    subcategories: [Canone, Condominio]
+  - name: 💡 Bollette
+    discretionary: false
+    subcategories: [Luce, Gas, Internet, Telefono]
+  - name: 🚲 Trasporti
+    discretionary: false
+    subcategories: [Bici, Treno, Autobus, Car sharing]
+  - name: 🎬 Svago
+    discretionary: true
+    subcategories: [Cinema, Concerti, Libri, Giochi]
+  - name: 🛍️ Shopping
+    discretionary: true
+    subcategories: [Vestiti, Scarpe, Casa]
+  - name: 📺 Abbonamenti
+    discretionary: true
+    subcategories: [Streaming, Palestra, App]
+  - name: 🧳 Vacanze
+    discretionary: true
+    subcategories: [Alloggio, Viaggio, Attività]
+  - name: 🩺 Salute
+    discretionary: false
+    subcategories: [Farmacia, Visite]
+  - name: 🎁 Regali
+    discretionary: false
+    subcategories: [Compleanni, Natale]
+  - name: 📊 Investimenti
+    discretionary: false
+    subcategories: [Bond, ETF, Commissioni, Cedole]
+  - name: ❓ Varie
+    discretionary: false
+    subcategories: []
