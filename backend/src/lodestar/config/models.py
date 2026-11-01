@@ -60,6 +60,8 @@ class PortfolioConfig(Strict):
 class AssetMapping(Strict):
     asset_class: Literal["equity_etf", "money_market_etf", "govt_bond"]
     bucket: str
+    isin: str | None = None  # per-ticker overrides only: fills a missing ISIN
+    ticker: str | None = None  # per-ticker overrides only: the ticker to keep in Lodestar
 
 
 class ImportAdjustment(Strict):
@@ -78,6 +80,8 @@ class InitialImportConfig(Strict):
     asset_classes: dict[str, AssetMapping] = {}
     instruments: dict[str, AssetMapping] = {}  # per-ticker override of the label mapping
     skip_tickers: list[str] = []  # positions and their trades left out on purpose
+    # Positions never traded are imported only if listed here; omit the key to keep them all.
+    watchlist: list[str] | None = None
     adjustment: ImportAdjustment | None = None
 
 

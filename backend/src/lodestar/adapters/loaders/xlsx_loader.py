@@ -209,7 +209,6 @@ class XlsxLoader:
             if not ticker:
                 continue
             label = _text(at(row, position_cols["Asset"]))
-            isin = _text(at(row, position_cols["Prezzo - Metodo 2 (ISIN)"])).upper()
             if ticker in imp.skip_tickers:
                 result.skipped.append(f"{ticker}: escluso da configurazione")
                 skipped.add(ticker)
@@ -219,6 +218,9 @@ class XlsxLoader:
                 result.skipped.append(f"{ticker}: asset {label!r} non mappato")
                 skipped.add(ticker)
                 continue
+            isin = (
+                mapping.isin or _text(at(row, position_cols["Prezzo - Metodo 2 (ISIN)"]))
+            ).upper()
             if not ISIN.match(isin):
                 result.skipped.append(f"{ticker}: senza ISIN")
                 skipped.add(ticker)
@@ -230,14 +232,19 @@ class XlsxLoader:
             else:
                 tax = DEFAULT_TAX.get(mapping.asset_class, ETF_TAX)
             known[ticker] = InstrumentInput(
-                ticker=ticker,
+                ticker=mapping.ticker or ticker,
                 isin=isin,
-                name=ticker,
+                name=mapping.ticker or ticker,
                 asset_class=mapping.asset_class,
                 tax_rate=_plain(tax),
                 bucket=mapping.bucket,
             )
-        result.instruments.extend(known.values())
+        traded = {_text(at(row, trade_cols["Ticker"])) for row in rows[2:]}
+        for ticker, candidate in known.items():
+            if imp.watchlist is None or ticker in traded or ticker in imp.watchlist:
+                result.instruments.append(candidate)
+            else:
+                result.skipped.append(f"{ticker}: fuori watchlist")
 
         account = self._settings.portfolio.trade_account
         for number, row in enumerate(rows[2:], start=3):
@@ -261,7 +268,7 @@ class XlsxLoader:
                 result.trades.append(
                     TradeInput(
                         date=_date(at(row, trade_cols["Data"]), "Data"),
-                        ticker=ticker,
+                        ticker=instrument.ticker,
                         side="sell" if quantity < 0 else "buy",
                         quantity=_plain(abs(quantity)),
                         price=_plain(_number(at(row, trade_cols["Prezzo d'acquisto"]), "Prezzo")),

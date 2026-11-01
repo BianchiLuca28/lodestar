@@ -284,3 +284,34 @@ def test_zero_amount_rows_are_skipped_not_rejected(tmp_path: Path) -> None:
     assert outcome.errors == []
     assert outcome.summary.count == 5
     assert any("riga 7" in n and "importo 0" in n for n in outcome.notes)
+
+
+def test_watchlist_keeps_only_listed_untraded_instruments(sheet: Path, tmp_path: Path) -> None:
+    config = edited_config(tmp_path, {"watchlist": []})
+    data = tmp_path / "data"
+    outcome = run_import(sheet, config, data, dry_run=False)
+    assert rows(data, "SELECT ticker FROM instruments ORDER BY ticker") == [
+        ("BTP-01GN31",),
+        ("XEON",),
+    ]  # traded ones always stay
+    assert any("VWCE: fuori watchlist" in n for n in outcome.notes)
+
+
+def test_override_supplies_isin_and_ticker(sheet: Path, tmp_path: Path) -> None:
+    from openpyxl import load_workbook
+
+    wb = load_workbook(sheet)
+    wb["Log Transazioni"]["L6"] = ""  # VWCE row loses its ISIN
+    wb["Log Transazioni"]["I6"] = "UCITS-ETF-World"
+    wb.save(sheet)
+    override = {"asset_class": "equity_etf", "bucket": "P4", "isin": "IE00000VWCE1"}
+    config = edited_config(
+        tmp_path,
+        {
+            "instruments": {"UCITS-ETF-World": {**override, "ticker": "VWCE"}},
+            "watchlist": ["UCITS-ETF-World"],
+        },
+    )
+    data = tmp_path / "data"
+    assert run_import(sheet, config, data, dry_run=False).errors == []
+    assert ("VWCE", "IE00000VWCE1") in rows(data, "SELECT ticker, isin FROM instruments")
