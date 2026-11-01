@@ -13,8 +13,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./config:/app/config
-      - ./data:/app/data
+      # `make dev-demo` points these at config.example/ and data-demo/.
+      - ${LODESTAR_CONFIG:-./config}:/app/config:ro
+      - ${LODESTAR_DATA:-./data}:/app/data
 
   frontend:
     build: ./frontend

@@ -5,7 +5,7 @@ FRONTEND := frontend
 CONFIG ?= config
 DATA ?= data
 
-.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate import demo
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate import demo dev-demo
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
@@ -47,3 +47,6 @@ import: ## One-time import: make import FILE=path.csv [ARGS=--dry-run] [CONFIG=c
 demo: ## Rebuild data-demo/ from the fake persona (config.example + ledger.csv)
 	rm -rf data-demo
 	$(MAKE) import FILE=config.example/ledger.csv CONFIG=config.example DATA=data-demo
+
+dev-demo: ## Run the stack on the fake persona (run `make demo` first); UI on http://127.0.0.1:8080
+	LODESTAR_CONFIG=./config.example LODESTAR_DATA=./data-demo docker compose up --build
