@@ -66,7 +66,9 @@ Lodestar runs in Docker; Ollama runs natively on the host so it can use the GPU.
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend, and [Ollama](https://ollama.com/) for Windows. Start both.
 2. `make dev`, then open <http://127.0.0.1:8080>. The badge in the top right shows whether the backend and the LLM are reachable.
 
-The UI is bound to `127.0.0.1` only. The backend container reaches Ollama at `http://host.docker.internal:11434`; outside Docker it uses `http://127.0.0.1:11434` (override with the `LODESTAR_LLM_BASE_URL` environment variable until `config/settings.yaml` arrives in v0.1).
+The backend needs a `config/` folder: start from the fake persona with `cp -r config.example config`, then edit the YAML files. An invalid file stops the backend with a message naming the file and the field (`docker compose logs backend`).
+
+The UI is bound to `127.0.0.1` only. The LLM endpoint comes from `config/settings.yaml`; in Docker, `LODESTAR_LLM_BASE_URL` overrides it with `http://host.docker.internal:11434` to reach Ollama on the host.
 
 **"LLM non raggiungibile" in Docker while Ollama is running?** Ollama listens only on `127.0.0.1` by default. Make it listen on all interfaces: set the user environment variable `OLLAMA_HOST=0.0.0.0`, quit Ollama from the tray and start it again.
 
