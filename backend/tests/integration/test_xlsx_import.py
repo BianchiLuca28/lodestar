@@ -269,3 +269,18 @@ def test_ticker_overrides_beat_the_asset_label(sheet: Path, tmp_path: Path) -> N
     ]
     assert any("VWCE" in n and "escluso" in n for n in outcome.notes)
     assert any("BTC: operazione del 02/08/2026" in n for n in outcome.notes)
+
+
+def test_zero_amount_rows_are_skipped_not_rejected(tmp_path: Path) -> None:
+    from openpyxl import load_workbook
+
+    path = build_sheet(tmp_path / "s.xlsx")
+    wb = load_workbook(path)
+    wb["Log Entrate_Uscite"].append(
+        log_row("", "01/03/2026", "❓ Varie", "", "€ 0,00", "Apertura conto", "", "Broker Orsa")
+    )
+    wb.save(path)
+    outcome = run_import(path, EXAMPLE, tmp_path / "data", dry_run=True)
+    assert outcome.errors == []
+    assert outcome.summary.count == 5
+    assert any("riga 7" in n and "importo 0" in n for n in outcome.notes)
