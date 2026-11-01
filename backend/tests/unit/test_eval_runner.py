@@ -15,7 +15,10 @@ def test_dataset_parses_and_uses_the_fake_persona() -> None:
     cases = load_cases(DEFAULT_DATASET)
     assert 10 <= len(cases) <= 20
     assert len({c.id for c in cases}) == len(cases)
-    accounts = {a["name"] for a in yaml.safe_load((CONFIG_DIR / "accounts.yaml").read_text("utf-8"))["accounts"]}
+    accounts = {
+        a["name"]
+        for a in yaml.safe_load((CONFIG_DIR / "accounts.yaml").read_text("utf-8"))["accounts"]
+    }
     cats = {
         c["name"]: set(c["subcategories"])
         for c in yaml.safe_load((CONFIG_DIR / "categories.yaml").read_text("utf-8"))["categories"]
