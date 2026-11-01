@@ -45,7 +45,10 @@ def test_wrong_header_is_a_file_error(tmp_path: Path) -> None:
         ("2026-03-14,12,5,Banca Aurora,,🍝 Ristoranti,Pizzeria,Pizza,,false", None),
         ("2026-03-14,abc,Banca Aurora,,🍝 Ristoranti,Pizzeria,Pizza,,false", "amount"),
         ("14/03/2026,12.50,Banca Aurora,,🍝 Ristoranti,Pizzeria,Pizza,,false", "date"),
-        ("2026-03-14,12.50,Banca Aurora,,🍝 Ristoranti,Pizzeria,Pizza,,forse", "exclude_from_stats"),
+        (
+            "2026-03-14,12.50,Banca Aurora,,🍝 Ristoranti,Pizzeria,Pizza,,forse",
+            "exclude_from_stats",
+        ),
         ("2026-03-14,12.50,Banca Fantasma,,🍝 Ristoranti,Pizzeria,Pizza,,false", "from_account"),
         ("2026-03-14,12.50,,,🍝 Ristoranti,Pizzeria,Pizza,,false", "from_account"),
     ],
