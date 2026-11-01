@@ -1,6 +1,7 @@
 # ── Personal data and secrets (never commit) ─────────────
 /config/
 /data/
+/data-demo/
 knowledge/*
 !knowledge/README.md
 evals/data/private/
