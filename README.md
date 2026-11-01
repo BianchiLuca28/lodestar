@@ -68,6 +68,8 @@ Lodestar runs in Docker; Ollama runs natively on the host so it can use the GPU.
 
 The backend needs a `config/` folder: start from the fake persona with `cp -r config.example config`, then edit the YAML files. An invalid file stops the backend with a message naming the file and the field (`docker compose logs backend`).
 
+**Try it on fake data:** `make demo` builds `data-demo/` from the fake persona in `config.example/`, then `make dev-demo` runs the stack on it. Your real `config/` and `data/` are not touched.
+
 The UI is bound to `127.0.0.1` only. The LLM endpoint comes from `config/settings.yaml`; in Docker, `LODESTAR_LLM_BASE_URL` overrides it with `http://host.docker.internal:11434` to reach Ollama on the host.
 
 **"LLM non raggiungibile" in Docker while Ollama is running?** Ollama listens only on `127.0.0.1` by default. Make it listen on all interfaces: set the user environment variable `OLLAMA_HOST=0.0.0.0`, quit Ollama from the tray and start it again.

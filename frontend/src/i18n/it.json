@@ -16,5 +16,45 @@
   },
   "page": {
     "placeholder": "In arrivo."
+  },
+  "movimenti": {
+    "filters": {
+      "dateFrom": "Dal",
+      "dateTo": "Al",
+      "account": "Conto",
+      "category": "Categoria",
+      "tag": "Tag",
+      "search": "Cerca",
+      "any": "Tutti",
+      "clear": "Azzera filtri"
+    },
+    "columns": {
+      "date": "Data",
+      "amount": "Importo",
+      "accounts": "Conti",
+      "category": "Categoria",
+      "note": "Nota",
+      "tag": "Tag"
+    },
+    "excluded": "escluso",
+    "excludedHint": "Escluso dalle statistiche",
+    "loading": "Caricamento movimenti…",
+    "empty": "Nessun movimento trovato.",
+    "error": "Impossibile caricare i movimenti.",
+    "range": "{{from}}–{{to}} di {{total}}",
+    "previous": "Precedente",
+    "next": "Successivo"
+  },
+  "error": {
+    "domain": "Operazione non valida.",
+    "invalidAmount": "Importo non valido: deve essere maggiore di zero, con al massimo due decimali.",
+    "invalidTransaction": "Movimento non valido.",
+    "missingAccount": "Indica almeno un conto (da o verso).",
+    "unknownAccount": "Conto sconosciuto.",
+    "sameAccount": "I due conti devono essere diversi.",
+    "unknownCategory": "Categoria sconosciuta.",
+    "unknownSubcategory": "Sottocategoria non valida per questa categoria.",
+    "notFound": "Movimento non trovato.",
+    "linkedToBalanceCheck": "Questo movimento è la rettifica di una verifica saldo e non può essere eliminato."
   }
 }

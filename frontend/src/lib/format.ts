@@ -14,3 +14,13 @@ export function formatDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   return `${day}/${month}/${year}`;
 }
+
+export type Direction = "expense" | "income" | "transfer";
+
+/** Money with a sign from the direction: −expense, +income, unsigned transfer. */
+export function formatSignedMoney(amount: string, direction: Direction): string {
+  const value = formatMoney(amount);
+  if (direction === "expense") return `−${value}`;
+  if (direction === "income") return `+${value}`;
+  return value;
+}
