@@ -14,7 +14,13 @@ const PAGES = [
 beforeEach(() => {
   vi.stubGlobal(
     "fetch",
-    vi.fn().mockResolvedValue(new Response(JSON.stringify({ status: "ok", version: "0.0.1" }))),
+    vi.fn().mockResolvedValue(new Response(
+        JSON.stringify({
+          status: "ok",
+          version: "0.0.1",
+          llm: { reachable: true, base_url: "http://127.0.0.1:11434" },
+        }),
+      )),
   );
 });
 

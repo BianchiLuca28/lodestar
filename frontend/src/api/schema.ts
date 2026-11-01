@@ -30,6 +30,14 @@ export interface components {
             status: "ok";
             /** Version */
             version: string;
+            llm: components["schemas"]["LlmStatus"];
+        };
+        /** LlmStatus */
+        LlmStatus: {
+            /** Reachable */
+            reachable: boolean;
+            /** Base Url */
+            base_url: string;
         };
     };
     responses: never;
