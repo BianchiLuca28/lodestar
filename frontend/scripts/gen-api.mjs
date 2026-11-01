@@ -8,7 +8,7 @@ import openapiTS, { astToString } from "openapi-typescript";
 const backend = fileURLToPath(new URL("../../backend", import.meta.url));
 const json = execFileSync(
   "uv",
-  ["run", "python", "-c", "import json; from lodestar.main import app; print(json.dumps(app.openapi()))"],
+  ["run", "python", "-c", "import json; from pathlib import Path; from lodestar.config.loader import load_config; from lodestar.main import create_app; print(json.dumps(create_app(load_config(Path('../config.example'))).openapi()))"],
   { cwd: backend, encoding: "utf-8" },
 );
 

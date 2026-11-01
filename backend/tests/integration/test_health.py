@@ -59,6 +59,8 @@ def test_health_reports_llm_unreachable_on_error_status(client: TestClient) -> N
 
 
 def test_health_schema_is_in_openapi() -> None:
-    schemas = create_app(load_config(EXAMPLE), Settings(llm_base_url=BASE_URL)).openapi()["components"]["schemas"]
+    schemas = create_app(load_config(EXAMPLE), Settings(llm_base_url=BASE_URL)).openapi()[
+        "components"
+    ]["schemas"]
 
     assert {"HealthResponse", "LlmStatus"} <= schemas.keys()
