@@ -50,7 +50,9 @@ def test_valid_transaction_accepted(tmp_path: Path) -> None:
     ("amount", "from_account", "to_account"),
     [(0, "Banca Aurora", None), (-5, "Banca Aurora", None), (100, None, None)],
 )
-def test_check_constraints(tmp_path: Path, amount: int, from_account: str | None, to_account: str | None) -> None:
+def test_check_constraints(
+    tmp_path: Path, amount: int, from_account: str | None, to_account: str | None
+) -> None:
     db = tmp_path / "lodestar.db"
     migrate(db)
     with pytest.raises(sqlite3.IntegrityError):
@@ -63,3 +65,20 @@ def test_downgrade_removes_everything(tmp_path: Path) -> None:
     downgrade_all(db)
     assert tables(db) == set()
     assert current_revision(db) is None
+
+
+def test_models_match_migrations(tmp_path: Path) -> None:
+    from alembic.autogenerate import compare_metadata
+    from alembic.runtime.migration import MigrationContext
+    from sqlmodel import SQLModel
+
+    import lodestar.adapters.db.tables  # noqa: F401
+    from lodestar.adapters.db.engine import make_engine
+
+    db = tmp_path / "lodestar.db"
+    migrate(db)
+    engine = make_engine(db)
+    with engine.connect() as conn:
+        diff = compare_metadata(MigrationContext.configure(conn), SQLModel.metadata)
+    engine.dispose()
+    assert diff == [], "SQLModel tables and migrations disagree; add a migration"
