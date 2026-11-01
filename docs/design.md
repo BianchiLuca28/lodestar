@@ -191,15 +191,15 @@ Once the import is committed, the database is the only copy that matters (ADR 00
 
 **XLSX import mapping.**
 
-- “Log EntrateUscite” → `transactions` (the older “LOG EU” and “DA COPIARE” are checked for rows not already present).
+- “Log Entrate_Uscite” → `transactions`, keeping the form timestamp as `created_at`. The older “LOG EU” and “DA COPIARE” are example sheets and are not read.
 
-- “Log Transazioni” → `trades` + `instruments`: XEON (53 @ 149.7419 on 29/07/2026), the 6 government bonds of 29/10/2026 (Sheet quantity = nominal ÷ 100, converted back to nominal) and VWCE; tickers with no trade become watchlist instruments.
+- “Log Transazioni” → `trades` + `instruments`: XEON (53 @ 149.7419 on 29/07/2026), the 6 government bonds of 29/10/2026 (Sheet quantity = nominal ÷ 100, converted back to nominal) and VWCE; tickers with no trade become watchlist instruments. The sheet's “Asset” label maps to an asset class and bucket through `settings.yaml → initial_import.asset_classes`; positions without an ISIN or with an unmapped label (crypto) are skipped and listed in the report. Trades settle on `portfolio.trade_account` (Fineco). Imported trades do not create cash lines: each links to the ledger line already leaving (buy) or entering (sell) that account on the trade's day, the largest one when several trades share an aggregated line.
 
 - “Patrimonio”, “EU”, “Dati e Calcoli” → not imported: they are computed views that Lodestar recomputes. Tag list and asset-class list seed the config.
 
 - “Spese di Emergenza” → `planned_expenses`.
 
-- Adds the 01/03/2026 “Riallineamento saldi” adjustment the plan requires (€7,747.57), then a balance check per account against the date of the Sheet's last update.
+- Adds the 01/03/2026 “Riallineamento saldi” adjustment the plan requires (€7,747.57), configured in `settings.yaml → initial_import.adjustment`. The balance check per account against the Sheet's last balances is done by hand at cutover, with Verifica saldo.
 
 ## 6. AI design
 
