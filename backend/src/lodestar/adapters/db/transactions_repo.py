@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 
 from sqlalchemy import Engine, func, or_
 from sqlmodel import Session, col, select
+from sqlmodel.sql.expression import SelectOfScalar
 
 from lodestar.adapters.db.tables import BalanceCheck, Transaction
 from lodestar.domain.balances import AccountTotals
@@ -36,6 +37,34 @@ def _apply(line: LineInput, row: Transaction) -> None:
     row.exclude_from_stats = line.exclude_from_stats
 
 
+def _filtered(filters: Filters) -> SelectOfScalar[Transaction]:
+    query = select(Transaction)
+    if filters.date_from:
+        query = query.where(Transaction.date >= filters.date_from)
+    if filters.date_to:
+        query = query.where(Transaction.date <= filters.date_to)
+    if filters.account:
+        query = query.where(
+            or_(
+                col(Transaction.from_account) == filters.account,
+                col(Transaction.to_account) == filters.account,
+            )
+        )
+    if filters.category:
+        query = query.where(Transaction.category == filters.category)
+    if filters.tag:
+        query = query.where(Transaction.tag == filters.tag)
+    if filters.q:
+        pattern = f"%{filters.q.lower()}%"
+        query = query.where(
+            or_(
+                func.lower(col(Transaction.note)).like(pattern),
+                func.lower(col(Transaction.subcategory)).like(pattern),
+            )
+        )
+    return query
+
+
 def new_row(line: LineInput, source: str) -> Transaction:
     row = Transaction(
         date=line.date,
@@ -53,30 +82,7 @@ class TransactionRepository:
         self._engine = engine
 
     def list(self, filters: Filters, limit: int, offset: int) -> tuple[list[Transaction], int]:
-        query = select(Transaction)
-        if filters.date_from:
-            query = query.where(Transaction.date >= filters.date_from)
-        if filters.date_to:
-            query = query.where(Transaction.date <= filters.date_to)
-        if filters.account:
-            query = query.where(
-                or_(
-                    col(Transaction.from_account) == filters.account,
-                    col(Transaction.to_account) == filters.account,
-                )
-            )
-        if filters.category:
-            query = query.where(Transaction.category == filters.category)
-        if filters.tag:
-            query = query.where(Transaction.tag == filters.tag)
-        if filters.q:
-            pattern = f"%{filters.q.lower()}%"
-            query = query.where(
-                or_(
-                    func.lower(col(Transaction.note)).like(pattern),
-                    func.lower(col(Transaction.subcategory)).like(pattern),
-                )
-            )
+        query = _filtered(filters)
         with Session(self._engine) as session:
             total = session.exec(select(func.count()).select_from(query.subquery())).one()
             rows = session.exec(
@@ -85,6 +91,12 @@ class TransactionRepository:
                 .offset(offset)
             ).all()
         return list(rows), total
+
+    def all_matching(self, filters: Filters) -> Sequence[Transaction]:
+        """Every matching line, oldest first: the order of an export."""
+        query = _filtered(filters).order_by(col(Transaction.date), col(Transaction.id))
+        with Session(self._engine) as session:
+            return session.exec(query).all()
 
     def get(self, transaction_id: int) -> Transaction:
         with Session(self._engine) as session:
