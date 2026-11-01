@@ -5,6 +5,7 @@ knowledge/*
 !knowledge/README.md
 evals/data/private/
 evals/results/private/
+evals/results/*_fake_*.json
 .env
 .env.*
 !.env.example
