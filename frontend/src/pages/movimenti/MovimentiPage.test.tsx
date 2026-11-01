@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 
-import { calls, mockApi, renderPage } from "@/test-utils";
+import { calls, lastCall, mockApi, renderPage } from "@/test-utils";
 
 import { MovimentiPage } from "./MovimentiPage";
 
@@ -58,7 +58,7 @@ it("shows rows with signed Italian amounts, accounts and categories", async () =
   renderPage(<MovimentiPage />, "/movimenti");
 
   await waitFor(() => expect(rows()).toHaveLength(3));
-  const [expense, income, transfer] = rows();
+  const [expense, income, transfer] = rows() as [HTMLElement, HTMLElement, HTMLElement];
   expect(nbsp(expense.textContent)).toContain("14/03/2026");
   expect(nbsp(expense.textContent)).toContain("−12,50 €");
   expect(expense.textContent).toContain("Pizzeria");
@@ -87,7 +87,7 @@ it("applies filters from the URL on load", async () => {
   renderPage(<MovimentiPage />, "/movimenti?account=Contanti&q=pizza");
 
   await waitFor(() => expect(calls(fetchMock, "/api/transactions").length).toBeGreaterThan(0));
-  const params = calls(fetchMock, "/api/transactions").at(-1)!;
+  const params = lastCall(fetchMock, "/api/transactions");
   expect(params.get("account")).toBe("Contanti");
   expect(params.get("q")).toBe("pizza");
   expect(await screen.findByLabelText("Conto")).toHaveValue("Contanti");
@@ -104,7 +104,7 @@ it("changing a filter updates the URL and the query, and resets the page", async
   fireEvent.change(screen.getByLabelText("Tag"), { target: { value: "lisbona" } });
 
   await waitFor(() => {
-    const params = calls(fetchMock, "/api/transactions").at(-1)!;
+    const params = lastCall(fetchMock, "/api/transactions");
     expect(params.get("category")).toBe("💰 Stipendio");
     expect(params.get("date_from")).toBe("2026-02-01");
     expect(params.get("tag")).toBe("lisbona");
@@ -122,7 +122,7 @@ it("text search is applied after typing stops", async () => {
 
   fireEvent.change(await screen.findByLabelText("Cerca"), { target: { value: "pizza" } });
   await waitFor(() =>
-    expect(calls(fetchMock, "/api/transactions").at(-1)!.get("q")).toBe("pizza"),
+    expect(lastCall(fetchMock, "/api/transactions").get("q")).toBe("pizza"),
   );
 });
 
@@ -139,7 +139,7 @@ it("paginates 50 rows at a time", async () => {
   expect(screen.getByRole("button", { name: "Precedente" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Successivo" }));
   expect(await screen.findByText("51–100 di 120")).toBeInTheDocument();
-  expect(calls(fetchMock, "/api/transactions").at(-1)!.get("offset")).toBe("50");
+  expect(lastCall(fetchMock, "/api/transactions").get("offset")).toBe("50");
   fireEvent.click(screen.getByRole("button", { name: "Successivo" }));
   expect(await screen.findByText("101–120 di 120")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Successivo" })).toBeDisabled();

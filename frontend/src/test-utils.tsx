@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- test helpers, never hot-reloaded */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -54,6 +55,13 @@ export function calls(fetchMock: ReturnType<typeof mockApi>, path: string): URLS
     .map(([input]) => new URL(String(input), "http://localhost"))
     .filter((url) => url.pathname === path)
     .map((url) => url.searchParams);
+}
+
+/** The query string of the last call to a path; fails the test if there was none. */
+export function lastCall(fetchMock: ReturnType<typeof mockApi>, path: string): URLSearchParams {
+  const last = calls(fetchMock, path).at(-1);
+  if (last === undefined) throw new Error(`no call to ${path}`);
+  return last;
 }
 
 function LocationProbe() {
