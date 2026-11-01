@@ -230,3 +230,24 @@ describe("changing the ledger", () => {
     expect(await dialog.findByText(/rettifica di una verifica saldo/)).toBeInTheDocument();
   });
 });
+
+it("export links download the filtered ledger", async () => {
+  mockApi({ "/api/transactions": PAGE });
+  renderPage(<MovimentiPage />, "/movimenti?account=Contanti&q=pizza&offset=50");
+
+  const csvLink = await screen.findByRole("link", { name: "CSV" });
+  const csvUrl = new URL(csvLink.getAttribute("href") ?? "", "http://localhost");
+  expect(csvUrl.pathname).toBe("/api/transactions/export");
+  expect(csvUrl.searchParams.get("format")).toBe("csv");
+  expect(csvUrl.searchParams.get("account")).toBe("Contanti");
+  expect(csvUrl.searchParams.get("q")).toBe("pizza");
+  expect(csvUrl.searchParams.get("offset")).toBeNull();
+  expect(csvLink).toHaveAttribute("download");
+
+  const xlsx = new URL(
+    screen.getByRole("link", { name: "Excel" }).getAttribute("href") ?? "",
+    "http://localhost",
+  );
+  expect(xlsx.searchParams.get("format")).toBe("xlsx");
+  expect(xlsx.searchParams.get("account")).toBe("Contanti");
+});
