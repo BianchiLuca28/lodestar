@@ -69,6 +69,19 @@
       "choose": "Scegli…",
       "none": "—",
       "genericError": "Salvataggio non riuscito. Riprova."
+    },
+    "balances": {
+      "title": "Saldi",
+      "check": "Verifica saldo",
+      "dialogTitle": "Verifica saldo · {{account}}",
+      "real": "Saldo reale",
+      "calculate": "Calcola differenza",
+      "confirm": "Conferma",
+      "computed": "Saldo calcolato",
+      "gap": "Differenza",
+      "noGap": "Saldo corretto: nessuna rettifica necessaria.",
+      "adjustmentHint": "Confermando, viene creata una rettifica esclusa dalle statistiche.",
+      "lastCheck": "Ultima verifica: {{date}} · differenza {{gap}}"
     }
   },
   "error": {
