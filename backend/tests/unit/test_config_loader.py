@@ -39,7 +39,8 @@ def test_example_config_loads() -> None:
     assert cfg.settings.locale == "it"
     assert cfg.settings.currency == "EUR"
     assert set(cfg.settings.models.model_dump()) == {"parse", "chat", "vision", "embed"}
-    assert all(not t.enabled for t in cfg.settings.backup.targets)
+    enabled = {t.kind for t in cfg.settings.backup.targets if t.enabled}
+    assert enabled == {"folder"}  # local backups on by default; S3 is opt-in (v0.2)
     assert cfg.default_account.name == "Banca Aurora"
     assert {b.id for b in cfg.buckets} == {"P1", "P2", "P3", "P4"}
     assert cfg.bucket("P3").expected_house_date is not None
