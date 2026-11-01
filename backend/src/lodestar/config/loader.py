@@ -77,6 +77,28 @@ def _cross_check(cfg: AppConfig) -> Iterator[str]:
     if adjustment not in names:
         yield f"settings.yaml → ledger.adjustment_category: unknown category {adjustment!r}"
 
+    trade_account = cfg.settings.portfolio.trade_account
+    if trade_account not in accounts:
+        yield f"settings.yaml → portfolio.trade_account: unknown account {trade_account!r}"
+    imp = cfg.settings.initial_import
+    for label, mapping in imp.asset_classes.items():
+        if mapping.bucket not in buckets:
+            yield (
+                f"settings.yaml → initial_import.asset_classes.{label}.bucket: "
+                f"unknown bucket {mapping.bucket!r}"
+            )
+    if imp.adjustment is not None:
+        if imp.adjustment.account not in accounts:
+            yield (
+                "settings.yaml → initial_import.adjustment.account: "
+                f"unknown account {imp.adjustment.account!r}"
+            )
+        if imp.adjustment.category not in names:
+            yield (
+                "settings.yaml → initial_import.adjustment.category: "
+                f"unknown category {imp.adjustment.category!r}"
+            )
+
     for i, rule in enumerate(cfg.rules):
         where = f"rules.yaml → rules[{i}]"
         for ref in rule.plan_section:

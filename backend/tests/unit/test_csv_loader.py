@@ -6,6 +6,7 @@ import pytest
 
 from lodestar.adapters.loaders.base import UnsupportedFile, loader_for
 from lodestar.adapters.loaders.csv_loader import HEADER, CsvLoader
+from lodestar.config.models import AppConfig
 from lodestar.domain.ledger import Catalog
 
 CATALOG = Catalog(
@@ -61,7 +62,7 @@ def test_bad_rows_report_line_and_field(tmp_path: Path, row: str, field: str | N
     assert err.field == field
 
 
-def test_loader_chosen_by_extension(tmp_path: Path) -> None:
-    assert isinstance(loader_for(tmp_path / "x.CSV"), CsvLoader)
+def test_loader_chosen_by_extension(tmp_path: Path, example_config: AppConfig) -> None:
+    assert isinstance(loader_for(tmp_path / "x.CSV", example_config.settings), CsvLoader)
     with pytest.raises(UnsupportedFile):
-        loader_for(tmp_path / "x.pdf")
+        loader_for(tmp_path / "x.pdf", example_config.settings)

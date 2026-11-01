@@ -53,6 +53,32 @@ class LedgerConfig(Strict):
     adjustment_category: str  # category of the lines that close a balance-check gap
 
 
+class PortfolioConfig(Strict):
+    trade_account: str  # broker account trades settle on, unless a trade names another
+
+
+class AssetMapping(Strict):
+    asset_class: Literal["equity_etf", "money_market_etf", "govt_bond"]
+    bucket: str
+
+
+class ImportAdjustment(Strict):
+    """A one-off line the plan asks the initial import to add (e.g. a pre-tracking realignment)."""
+
+    date: date
+    amount: Money
+    account: str
+    direction: Literal["in", "out"]
+    category: str
+    note: str
+
+
+class InitialImportConfig(Strict):
+    # "Asset" label in the spreadsheet → instrument class and bucket; unmapped labels are skipped.
+    asset_classes: dict[str, AssetMapping] = {}
+    adjustment: ImportAdjustment | None = None
+
+
 class SettingsFile(Strict):
     locale: Literal["it", "en"] = "it"
     currency: Literal["EUR"] = "EUR"
@@ -60,6 +86,8 @@ class SettingsFile(Strict):
     llm: LlmConfig
     models: ModelsConfig
     ledger: LedgerConfig
+    portfolio: PortfolioConfig
+    initial_import: InitialImportConfig = InitialImportConfig()
     backup: BackupConfig = BackupConfig()
     notifications: NotificationsConfig = NotificationsConfig()
 

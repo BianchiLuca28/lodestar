@@ -41,7 +41,7 @@ def summarize(rows: Sequence[LineInput]) -> ImportSummary:
     )
 
 
-def format_report(summary: ImportSummary, errors: Sequence[str]) -> str:
+def format_report(summary: ImportSummary, errors: Sequence[str], notes: Sequence[str] = ()) -> str:
     lines = [
         f"Righe valide: {summary.count}",
         f"Periodo: {summary.first_date or '-'} → {summary.last_date or '-'}",
@@ -51,6 +51,8 @@ def format_report(summary: ImportSummary, errors: Sequence[str]) -> str:
     lines += [f"{a} | {i:.2f} | {o:.2f}" for a, (i, o) in summary.by_account.items()]
     lines += ["", "Categoria | Totale"]
     lines += [f"{c} | {t:.2f}" for c, t in summary.by_category.items()]
+    if notes:
+        lines += ["", *notes]
     if errors:
         lines += ["", f"Righe non valide: {len(errors)}", *errors]
     return "\n".join(lines)
