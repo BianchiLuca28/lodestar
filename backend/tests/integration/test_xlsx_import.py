@@ -198,3 +198,26 @@ def test_make_import_accepts_xlsx(
 def test_dates_are_read(sheet: Path, tmp_path: Path) -> None:
     outcome = run_import(sheet, EXAMPLE, tmp_path / "data", dry_run=True)
     assert outcome.summary.first_date == date(2026, 3, 1)
+
+
+@pytest.mark.parametrize("title", ["Log Entrate-Uscite", "log entrate uscite", "LogEntrateUscite"])
+def test_sheet_names_match_ignoring_spacing_and_punctuation(tmp_path: Path, title: str) -> None:
+    from openpyxl import load_workbook
+
+    path = build_sheet(tmp_path / "s.xlsx")
+    wb = load_workbook(path)
+    wb["Log Entrate_Uscite"].title = title
+    wb.save(path)
+    outcome = run_import(path, EXAMPLE, tmp_path / "data", dry_run=True)
+    assert outcome.errors == []
+
+
+def test_missing_sheet_error_lists_the_sheets_found(tmp_path: Path) -> None:
+    from openpyxl import load_workbook
+
+    path = build_sheet(tmp_path / "s.xlsx")
+    wb = load_workbook(path)
+    wb["Log Entrate_Uscite"].title = "Movimenti 2026"
+    wb.save(path)
+    [error] = run_import(path, EXAMPLE, tmp_path / "data", dry_run=True).errors
+    assert "'Movimenti 2026'" in error and "'Log Transazioni'" in error
