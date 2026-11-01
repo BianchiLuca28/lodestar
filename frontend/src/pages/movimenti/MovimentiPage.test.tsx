@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 
-import { calls, lastCall, mockApi, renderPage } from "@/test-utils";
+import { calls, lastCall, mockApi, renderPage, Reply, sent } from "@/test-utils";
 
 import { MovimentiPage } from "./MovimentiPage";
 
@@ -143,4 +143,90 @@ it("paginates 50 rows at a time", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Successivo" }));
   expect(await screen.findByText("101–120 di 120")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Successivo" })).toBeDisabled();
+});
+
+describe("changing the ledger", () => {
+  it("adds a line and reloads the table", async () => {
+    let created = false;
+    const fetchMock = mockApi({
+      "GET /api/transactions": () => (created ? { items: [tx(7)], total: 1 } : { items: [], total: 0 }),
+      "POST /api/transactions": () => {
+        created = true;
+        return new Reply(201, tx(7));
+      },
+    });
+    renderPage(<MovimentiPage />, "/movimenti");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Aggiungi movimento" }));
+    const form = within(await screen.findByRole("form"));
+    await form.findByRole("option", { name: "🍝 Ristoranti" });
+    fireEvent.change(form.getByLabelText("Importo"), { target: { value: "12,50" } });
+    fireEvent.change(form.getByLabelText("Categoria"), { target: { value: "🍝 Ristoranti" } });
+    fireEvent.click(form.getByRole("button", { name: "Salva" }));
+
+    await waitFor(() => expect(sent(fetchMock, "POST", "/api/transactions")).toHaveLength(1));
+    expect(sent(fetchMock, "POST", "/api/transactions")[0]?.[1]).toMatchObject({ amount: "12.50" });
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(screen.queryByRole("form")).toBeNull();
+  });
+
+  it("edits a row inline with a PATCH", async () => {
+    const fetchMock = mockApi({
+      "GET /api/transactions": PAGE,
+      "PATCH /api/transactions": new Reply(200, tx(1, { amount: "20.00" })),
+    });
+    renderPage(<MovimentiPage />, "/movimenti");
+
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    fireEvent.click(within(rows()[0] as HTMLElement).getByRole("button", { name: "Modifica" }));
+    const form = within(await screen.findByRole("form"));
+    expect(form.getByLabelText("Importo")).toHaveValue("12,50");
+    fireEvent.change(form.getByLabelText("Importo"), { target: { value: "20" } });
+    fireEvent.click(form.getByRole("button", { name: "Salva" }));
+
+    await waitFor(() => expect(sent(fetchMock, "PATCH", "/api/transactions/1")).toHaveLength(1));
+    expect(sent(fetchMock, "PATCH", "/api/transactions/1")[0]?.[1]).toMatchObject({ amount: "20.00" });
+    await waitFor(() => expect(screen.queryByRole("form")).toBeNull());
+  });
+
+  it("deletes after confirmation, and cancelling sends nothing", async () => {
+    const fetchMock = mockApi({
+      "GET /api/transactions": PAGE,
+      "DELETE /api/transactions": new Reply(204),
+    });
+    renderPage(<MovimentiPage />, "/movimenti");
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    fireEvent.click(within(rows()[1] as HTMLElement).getByRole("button", { name: "Elimina" }));
+    let dialog = within(await screen.findByRole("dialog"));
+    expect(dialog.getByText("Eliminare questo movimento?")).toBeInTheDocument();
+    fireEvent.click(dialog.getByRole("button", { name: "Annulla" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(sent(fetchMock, "DELETE", "/api/transactions")).toHaveLength(0);
+
+    fireEvent.click(within(rows()[1] as HTMLElement).getByRole("button", { name: "Elimina" }));
+    dialog = within(await screen.findByRole("dialog"));
+    fireEvent.click(dialog.getByRole("button", { name: "Elimina" }));
+    await waitFor(() => expect(sent(fetchMock, "DELETE", "/api/transactions/2")).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(calls(fetchMock, "/api/transactions").length).toBeGreaterThan(1); // reloaded
+  });
+
+  it("explains why an adjustment line cannot be deleted", async () => {
+    mockApi({
+      "GET /api/transactions": PAGE,
+      "DELETE /api/transactions": new Reply(409, {
+        key: "error.linkedToBalanceCheck",
+        field: null,
+        message: "linked",
+      }),
+    });
+    renderPage(<MovimentiPage />, "/movimenti");
+    await waitFor(() => expect(rows()).toHaveLength(3));
+
+    fireEvent.click(within(rows()[0] as HTMLElement).getByRole("button", { name: "Elimina" }));
+    const dialog = within(await screen.findByRole("dialog"));
+    fireEvent.click(dialog.getByRole("button", { name: "Elimina" }));
+    expect(await dialog.findByText(/rettifica di una verifica saldo/)).toBeInTheDocument();
+  });
 });

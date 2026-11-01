@@ -24,26 +24,47 @@ export const CONFIG = {
   ],
 };
 
-type Handler = (url: URL) => unknown;
+type Handler = (url: URL, init?: RequestInit) => unknown;
 
-/** Stub fetch: the handler for the longest matching path prefix answers with JSON. */
-export function mockApi(routes: Record<string, unknown | Handler>) {
-  const all: Record<string, unknown | Handler> = {
+/** A canned response with a status other than 200. */
+export class Reply {
+  constructor(
+    readonly status: number,
+    readonly body: unknown = null,
+  ) {}
+}
+
+/**
+ * Stub fetch. Keys are a path prefix ("/api/transactions") or a method plus prefix
+ * ("POST /api/transactions"); the longest match wins, method-specific keys first.
+ * Values are a JSON body, a Reply, an Error (500) or a handler returning either.
+ */
+export function mockApi(routes: Record<string, unknown>) {
+  const all: Record<string, unknown> = {
     "/api/health": HEALTH,
     "/api/config": CONFIG,
     "/api/transactions": { items: [], total: 0 },
     ...routes,
   };
-  const fetchMock = vi.fn((input: RequestInfo | URL) => {
+  const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), "http://localhost");
+    const method = (init?.method ?? "GET").toUpperCase();
+    const matches = (key: string) => {
+      const [m, path] = key.includes(" ") ? key.split(" ") : [undefined, key];
+      return (m === undefined || m === method) && url.pathname.startsWith(path ?? "");
+    };
     const key = Object.keys(all)
-      .filter((path) => url.pathname.startsWith(path))
-      .sort((a, b) => b.length - a.length)[0];
+      .filter(matches)
+      .sort((a, b) => Number(b.includes(" ")) - Number(a.includes(" ")) || b.length - a.length)[0];
     if (key === undefined) return Promise.resolve(new Response("not found", { status: 404 }));
-    const value = all[key];
+    let value = all[key];
+    if (typeof value === "function") value = (value as Handler)(url, init);
     if (value instanceof Error) return Promise.resolve(new Response("boom", { status: 500 }));
-    const body = typeof value === "function" ? (value as Handler)(url) : value;
-    return Promise.resolve(new Response(JSON.stringify(body)));
+    if (value instanceof Reply) {
+      const body = value.status === 204 ? null : JSON.stringify(value.body);
+      return Promise.resolve(new Response(body, { status: value.status }));
+    }
+    return Promise.resolve(new Response(JSON.stringify(value)));
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -82,4 +103,19 @@ export function renderPage(element: ReactElement, path: string) {
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+/** The calls made with a method to a path: [url, parsed JSON body]. */
+export function sent(
+  fetchMock: ReturnType<typeof mockApi>,
+  method: string,
+  path: string,
+): [URL, unknown][] {
+  return fetchMock.mock.calls
+    .filter(([, init]) => (init?.method ?? "GET").toUpperCase() === method)
+    .map(([input, init]) => {
+      const body = typeof init?.body === "string" ? (JSON.parse(init.body) as unknown) : null;
+      return [new URL(String(input), "http://localhost"), body] as [URL, unknown];
+    })
+    .filter(([url]) => url.pathname.startsWith(path));
 }

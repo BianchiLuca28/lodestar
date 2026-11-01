@@ -1,5 +1,5 @@
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { formatDate, formatSignedMoney } from "@/lib/format";
@@ -20,7 +20,19 @@ function accounts(t: Transaction): string {
   return t.from_account ?? t.to_account ?? "";
 }
 
-export function TransactionsTable({ rows }: { rows: Transaction[] }) {
+export function TransactionsTable({
+  rows,
+  editingId,
+  renderEditor,
+  onEdit,
+  onDelete,
+}: {
+  rows: Transaction[];
+  editingId: number | null;
+  renderEditor: (tx: Transaction) => ReactNode;
+  onEdit: (tx: Transaction) => void;
+  onDelete: (tx: Transaction) => void;
+}) {
   const { t } = useTranslation();
 
   const columns = useMemo(
@@ -75,8 +87,22 @@ export function TransactionsTable({ rows }: { rows: Transaction[] }) {
           </div>
         ),
       }),
+      column.display({
+        id: "actions",
+        header: () => <span className="sr-only">{t("movimenti.actions")}</span>,
+        cell: (c) => (
+          <div className="flex justify-end gap-2 whitespace-nowrap text-xs">
+            <button type="button" className="text-blue-700" onClick={() => onEdit(c.row.original)}>
+              {t("movimenti.edit")}
+            </button>
+            <button type="button" className="text-red-700" onClick={() => onDelete(c.row.original)}>
+              {t("movimenti.delete")}
+            </button>
+          </div>
+        ),
+      }),
     ],
-    [t],
+    [t, onEdit, onDelete],
   );
 
   // TanStack Table v8 returns unmemoizable functions; the React Compiler skips this component.
@@ -97,7 +123,14 @@ export function TransactionsTable({ rows }: { rows: Transaction[] }) {
         ))}
       </thead>
       <tbody>
-        {table.getRowModel().rows.map((row) => (
+        {table.getRowModel().rows.map((row) =>
+          row.original.id === editingId ? (
+            <tr key={row.id}>
+              <td colSpan={row.getVisibleCells().length} className="py-2">
+                {renderEditor(row.original)}
+              </td>
+            </tr>
+          ) : (
           <tr key={row.id} className="border-b border-gray-100 align-top">
             {row.getVisibleCells().map((cell) => (
               <td key={cell.id} className="px-2 py-2">
@@ -105,7 +138,8 @@ export function TransactionsTable({ rows }: { rows: Transaction[] }) {
               </td>
             ))}
           </tr>
-        ))}
+          ),
+        )}
       </tbody>
     </table>
   );
