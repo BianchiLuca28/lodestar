@@ -1,0 +1,31 @@
+# Fake persona settings. Copy the folder to config/ and edit.
+locale: it
+currency: EUR
+timezone: Europe/Rome
+
+llm:
+  # OpenAI-compatible endpoint (Ollama by default). In Docker: http://host.docker.internal:11434
+  base_url: http://127.0.0.1:11434
+
+# One model per task; swap freely and compare with `make eval`.
+models:
+  parse: qwen3:8b
+  chat: qwen3:8b
+  vision: null # chosen in v0.4
+  embed: bge-m3
+
+backup:
+  schedule: daily
+  targets:
+    - kind: folder
+      path: ./data/backups
+      enabled: false
+    - kind: s3
+      bucket: lodestar-backup-example
+      region: eu-south-1
+      enabled: false
+
+notifications:
+  telegram: false
+  digest_day: 1 # monthly digest on day 1
+  quiet_hours: ["22:00", "08:00"]

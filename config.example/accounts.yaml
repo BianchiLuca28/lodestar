@@ -1,0 +1,18 @@
+# Fake accounts. Exactly one is the default for messages that name no account.
+accounts:
+  - name: Banca Aurora
+    type: bank
+    bucket: P1
+    is_default: true
+  - name: Contanti
+    type: cash
+    bucket: P1
+  - name: Carta Nebbia
+    type: bank # prepaid card
+    bucket: P1
+  - name: Broker Orsa
+    type: broker
+    bucket: P3 # also holds P2 (XEON) and P4 (VWCE) positions, tracked per instrument
+  - name: Libretto Postale
+    type: postal
+    bucket: P2

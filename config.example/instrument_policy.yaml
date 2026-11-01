@@ -1,0 +1,31 @@
+# Fake instrument policy (plan.md §4, §5.4, §5.5, §5.8). ISINs are placeholders.
+buckets:
+  P2:
+    allowed: [XEON]
+  P3:
+    allowed:
+      - kind: govt_bond
+        countries: [IT, DE]
+        coupon: fixed
+        repayment: single
+        max_price: 100
+        mature_by: expected_house_date
+    alternation_pair:
+      - { country: IT, name: BTP-01GN31, isin: IT0000000AA1, maturity: 2031-06-01, lot: 1000 }
+      - { country: DE, name: Bund-15FB31, isin: DE0000000BB2, maturity: 2031-02-15 }
+    fallback: XEON # under 12 months to the house date
+  P4:
+    allowed: [VWCE]
+    under_review: [EIMI] # only after the P4 review (plan.md §5.5)
+
+never_buy:
+  - BTP Valore / Italia / Più
+  - inflation-linked bonds
+  - CCT
+  - government bonds other than Italy and Germany
+  - bond ETFs
+  - thematic, single-country or leveraged ETFs
+  - single stocks
+  - crypto
+  - commodities
+  - insurance products

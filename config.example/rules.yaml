@@ -1,0 +1,68 @@
+# Fake rule thresholds (design §6.2). `plan_section` points to headings in plan.md.
+rules:
+  - kind: discretionary_cap
+    limit: 550
+    period: month
+    net_of_refunds: true
+    plan_section: ["5.6"]
+
+  - kind: p1_range
+    account: Banca Aurora
+    min: 1200
+    max: 2800
+    plan_section: ["5.2"]
+
+  - kind: safety_valve
+    account: Banca Aurora
+    below: 1200
+    reduced_transfer: { P3: 175, P4: 150 }
+    plan_section: ["5.2"]
+
+  - kind: surplus
+    account: Banca Aurora
+    above: 2800
+    keep: 2400
+    when: quarter_end
+    destination: [{ bucket: P3, until: 2029-12-31 }, { bucket: P4, from: 2030-01-01 }]
+    plan_section: ["5.2"]
+
+  - kind: contributions
+    transfer: { from: Banca Aurora, to: Broker Orsa, amount: 650, by_day: 3 }
+    savings_plan: { instrument: VWCE, amount: 300, by_day: 6 }
+    plan_section: ["3"]
+
+  - kind: quarterly_order
+    bucket: P3
+    months: [1, 4, 7, 10]
+    plan_section: ["5.4"]
+
+  - kind: maturity_reinvestment
+    bucket: P3
+    within_days: 30
+    plan_section: ["5.4"]
+
+  - kind: p3_horizon
+    bucket: P3
+    switch_to: XEON
+    months_before_house_date: 12
+    plan_section: ["5.4"]
+
+  - kind: trajectory
+    bucket: P3
+    warning_below: 2000
+    plan_section: ["7"]
+
+  - kind: emergency_fund
+    bucket: P2
+    months_of_spending: 6
+    average_over_months: 12
+    plan_section: ["5.3"]
+
+  - kind: never_touch
+    buckets: [P2, P4]
+    plan_section: ["5.1"]
+
+  - kind: p4_review_threshold
+    bucket: P4
+    above: 8000
+    plan_section: ["5.5"]
