@@ -82,6 +82,11 @@
       "noGap": "Saldo corretto: nessuna rettifica necessaria.",
       "adjustmentHint": "Confermando, viene creata una rettifica esclusa dalle statistiche.",
       "lastCheck": "Ultima verifica: {{date}} · differenza {{gap}}"
+    },
+    "export": {
+      "label": "Esporta",
+      "csv": "CSV",
+      "xlsx": "Excel"
     }
   },
   "error": {

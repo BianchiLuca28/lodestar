@@ -82,6 +82,11 @@
       "noGap": "Balance is right: no adjustment needed.",
       "adjustmentHint": "Confirming creates an adjustment excluded from stats.",
       "lastCheck": "Last check: {{date}} · gap {{gap}}"
+    },
+    "export": {
+      "label": "Export",
+      "csv": "CSV",
+      "xlsx": "Excel"
     }
   },
   "error": {

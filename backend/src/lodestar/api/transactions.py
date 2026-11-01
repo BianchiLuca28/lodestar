@@ -2,13 +2,14 @@
 
 import datetime as dt
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import BaseModel
 
 from lodestar.adapters.db.tables import Transaction
 from lodestar.adapters.db.transactions_repo import Filters, TransactionRepository
+from lodestar.adapters.export.ledger_export import to_csv, to_xlsx
 from lodestar.api.errors import ErrorResponse
 from lodestar.config.catalog import catalog_of
 from lodestar.config.models import AppConfig
@@ -118,6 +119,38 @@ def create_transaction(data: TransactionIn, repo: Repo, catalog: Cat) -> Transac
     line = _line(data)
     validate_line(line, catalog)
     return to_out(repo.add(line, source="manual"))
+
+
+EXPORT_TYPES = {
+    "csv": "text/csv; charset=utf-8",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+
+@router.get(
+    "/export",
+    response_class=Response,
+    responses={200: {"content": {t: {} for t in EXPORT_TYPES.values()}}},
+)
+def export_transactions(
+    repo: Repo,
+    format: Literal["csv", "xlsx"] = "csv",
+    date_from: dt.date | None = None,
+    date_to: dt.date | None = None,
+    account: str | None = None,
+    category: str | None = None,
+    tag: str | None = None,
+    q: str | None = None,
+) -> Response:
+    """The filtered ledger as a download; the CSV re-imports through the initial import."""
+    rows = repo.all_matching(Filters(date_from, date_to, account, category, tag, q))
+    content = to_csv(rows) if format == "csv" else to_xlsx(rows)
+    filename = f"lodestar-movimenti-{dt.date.today().isoformat()}.{format}"
+    return Response(
+        content=content,
+        media_type=EXPORT_TYPES[format],
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.patch("/{transaction_id}")
