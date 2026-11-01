@@ -8,6 +8,7 @@ Reads two sheets and ignores the rest (computed views, examples):
 Cells may be typed (numbers, dates) or Italian text ("€ 1.234,56", "29/10/2026"); both parse.
 """
 
+import contextlib
 import re
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -97,11 +98,14 @@ def _plain(value: Decimal) -> Decimal:
     return Decimal(format(value.normalize(), "f"))
 
 
+def _key(title: str) -> str:
+    """Compare sheet names on letters and digits: "Log Entrate/Uscite" = "log entrate_uscite"."""
+    return "".join(ch for ch in title.casefold() if ch.isalnum())
+
+
 def _sheet(workbook: Any, name: str) -> Worksheet | None:
-    # Google Sheets keeps "/" in names; Excel turns it into "_". Match either.
-    wanted = name.replace("/", "_").casefold()
     for sheet in workbook.worksheets:
-        if sheet.title.replace("/", "_").casefold() == wanted:
+        if _key(sheet.title) == _key(name):
             return sheet  # type: ignore[no-any-return]
     return None
 
@@ -128,7 +132,9 @@ class XlsxLoader:
         try:
             log = _sheet(workbook, LOG_SHEET)
             if log is None:
-                result.errors.append(RowError(1, None, f"sheet {LOG_SHEET!r} not found"))
+                found = ", ".join(repr(sheet.title) for sheet in workbook.worksheets)
+                message = f"sheet {LOG_SHEET!r} not found; sheets in the file: {found}"
+                result.errors.append(RowError(1, None, message))
                 return result
             self._ledger(log, catalog, result)
             trades = _sheet(workbook, TRADES_SHEET)
@@ -145,6 +151,9 @@ class XlsxLoader:
         if isinstance(cols, str):
             result.errors.append(RowError(1, f"{LOG_SHEET} · {cols}", "column missing"))
             return
+        # "📦Amazon" in the sheet is "📦 Amazon" in config: match without spaces.
+        categories = {"".join(c.split()): c for c in catalog.categories}
+
         for number, row in enumerate(rows[1:], start=2):
 
             def cell(name: str, row: tuple[Any, ...] = row) -> Any:
@@ -159,13 +168,17 @@ class XlsxLoader:
                     amount=quantize(_number(cell("Importo"), "Importo")),
                     from_account=_text(cell("Da")) or None,
                     to_account=_text(cell("A")) or None,
-                    category=_text(cell("Categoria")),
+                    category=categories.get("".join(_text(cell("Categoria")).split()), "")
+                    or _text(cell("Categoria")),
                     subcategory=_text(cell("Sottocategoria")) or None,
                     note=_text(cell("Note")) or None,
                     tag=_text(cell("Tag")) or None,
                     exclude_from_stats=_text(cell("Tracciamento in Entrate/Uscite")).lower()
                     == "no",
                 )
+                if line.amount == 0:  # placeholder rows, e.g. "opening" an account
+                    result.skipped.append(f"{LOG_SHEET} riga {number}: importo 0, non importata")
+                    continue
                 validate_line(line, catalog)
             except (_Bad, FieldError) as exc:
                 result.errors.append(RowError(number, f"{LOG_SHEET} · {exc.field}", str(exc)))
@@ -188,7 +201,7 @@ class XlsxLoader:
         def at(row: tuple[Any, ...], i: int) -> Any:
             return row[i] if i < len(row) else None
 
-        mappings = self._settings.initial_import.asset_classes
+        imp = self._settings.initial_import
         known: dict[str, InstrumentInput] = {}
         skipped: set[str] = set()
         for row in rows[2:]:
@@ -197,7 +210,11 @@ class XlsxLoader:
                 continue
             label = _text(at(row, position_cols["Asset"]))
             isin = _text(at(row, position_cols["Prezzo - Metodo 2 (ISIN)"])).upper()
-            mapping = mappings.get(label)
+            if ticker in imp.skip_tickers:
+                result.skipped.append(f"{ticker}: escluso da configurazione")
+                skipped.add(ticker)
+                continue
+            mapping = imp.instruments.get(ticker) or imp.asset_classes.get(label)
             if mapping is None:
                 result.skipped.append(f"{ticker}: asset {label!r} non mappato")
                 skipped.add(ticker)
@@ -228,7 +245,10 @@ class XlsxLoader:
             if not _text(at(row, trade_cols["Data"])) and not ticker:
                 continue
             if ticker in skipped:
-                result.skipped.append(f"{ticker}: operazione del {_text(at(row, 0))} non importata")
+                when = _text(at(row, trade_cols["Data"]))
+                with contextlib.suppress(_Bad):
+                    when = _date(at(row, trade_cols["Data"]), "Data").strftime("%d/%m/%Y")
+                result.skipped.append(f"{ticker}: operazione del {when} non importata")
                 continue
             instrument = known.get(ticker)
             try:

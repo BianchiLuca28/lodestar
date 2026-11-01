@@ -76,6 +76,8 @@ class ImportAdjustment(Strict):
 class InitialImportConfig(Strict):
     # "Asset" label in the spreadsheet → instrument class and bucket; unmapped labels are skipped.
     asset_classes: dict[str, AssetMapping] = {}
+    instruments: dict[str, AssetMapping] = {}  # per-ticker override of the label mapping
+    skip_tickers: list[str] = []  # positions and their trades left out on purpose
     adjustment: ImportAdjustment | None = None
 
 
