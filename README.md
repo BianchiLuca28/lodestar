@@ -1,5 +1,7 @@
 # Lodestar
 
+[![CI](https://github.com/BianchiLuca28/lodestar/actions/workflows/ci.yml/badge.svg)](https://github.com/BianchiLuca28/lodestar/actions/workflows/ci.yml)
+
 **A local-first, AI-assisted personal finance tracker that keeps you on your own plan.**
 
 A lodestar is the star you navigate by. Here the star is your written financial plan, and Lodestar tells you whether you are still on course: not by chasing markets, but by checking every euro you spend and save against the rules you set for yourself.
@@ -55,6 +57,24 @@ Setup instructions arrive with v0.1. The shape will be:
 cp -r config.example config   # then edit the YAML files
 docker compose up -d          # needs Ollama running on the host
 open http://localhost:8080
+```
+
+## Development
+
+Needs [uv](https://docs.astral.sh/uv/), [pnpm](https://pnpm.io/), Node 24 and GNU make.
+
+```bash
+cd backend && uv sync && cd ..
+cd frontend && pnpm install && cd ..
+make help          # every target
+make lint test     # what CI runs
+```
+
+Pre-commit runs Ruff on `backend/` and ESLint on `frontend/` before each commit:
+
+```bash
+uv tool install pre-commit
+pre-commit install
 ```
 
 ## Contributing
