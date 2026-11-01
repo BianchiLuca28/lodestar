@@ -3,7 +3,7 @@
 BACKEND := backend
 FRONTEND := frontend
 
-.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
@@ -32,3 +32,6 @@ gen-api: ## Regenerate frontend API types from the backend OpenAPI schema
 
 fake-ledger: ## Regenerate config.example/ledger.csv (seeded, deterministic)
 	cd $(BACKEND) && uv run python scripts/gen_fake_ledger.py
+
+eval: ## Run the parsing eval set (ARGS=--compare for before/after)
+	cd $(BACKEND) && uv run python -m lodestar.ai.evals.runner $(ARGS)
