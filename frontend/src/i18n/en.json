@@ -16,5 +16,45 @@
   },
   "page": {
     "placeholder": "Coming soon."
+  },
+  "movimenti": {
+    "filters": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "account": "Account",
+      "category": "Category",
+      "tag": "Tag",
+      "search": "Search",
+      "any": "All",
+      "clear": "Clear filters"
+    },
+    "columns": {
+      "date": "Date",
+      "amount": "Amount",
+      "accounts": "Accounts",
+      "category": "Category",
+      "note": "Note",
+      "tag": "Tag"
+    },
+    "excluded": "excluded",
+    "excludedHint": "Excluded from stats",
+    "loading": "Loading transactions…",
+    "empty": "No transactions found.",
+    "error": "Could not load transactions.",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "error": {
+    "domain": "Invalid operation.",
+    "invalidAmount": "Invalid amount: it must be above zero, with at most two decimals.",
+    "invalidTransaction": "Invalid transaction.",
+    "missingAccount": "Set at least one account (from or to).",
+    "unknownAccount": "Unknown account.",
+    "sameAccount": "The two accounts must differ.",
+    "unknownCategory": "Unknown category.",
+    "unknownSubcategory": "Subcategory not valid for this category.",
+    "notFound": "Transaction not found.",
+    "linkedToBalanceCheck": "This transaction is a balance check's adjustment and cannot be deleted."
   }
 }
