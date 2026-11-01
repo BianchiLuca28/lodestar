@@ -25,7 +25,7 @@ knowledge/      User's course material for RAG (git-ignored except README)
 
 ## Commands
 
-`make help` lists every target; it is the source of truth. Current targets: `make help`, `make dev`, `make test` (`test-backend`, `test-frontend`), `make lint` (`lint-backend`, `lint-frontend`), `make gen-api`, `make fake-ledger`, `make eval`. Coming next: `make deploy-relay` (v0.2). Keep the Makefile and this line in sync.
+`make help` lists every target; it is the source of truth. Current targets: `make help`, `make dev`, `make test` (`test-backend`, `test-frontend`), `make lint` (`lint-backend`, `lint-frontend`), `make gen-api`, `make fake-ledger`, `make eval`, `make migrate`. Coming next: `make deploy-relay` (v0.2). Keep the Makefile and this line in sync.
 
 ## Invariants
 
