@@ -51,13 +51,12 @@ Python 3.12 · FastAPI · SQLite + sqlite-vec · LangGraph · Ollama · React + 
 
 ## Getting started
 
-Setup instructions arrive with v0.1. The shape will be:
-
-```bash
-cp -r config.example config   # then edit the YAML files
-docker compose up -d          # needs Ollama running on the host
-open http://localhost:8080
-```
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (WSL2 backend), [Ollama](https://ollama.com/), [uv](https://docs.astral.sh/uv/) and GNU make. Start Docker and Ollama.
+2. Create your config: `cp -r config.example config`, then edit the YAML files and `plan.md` (accounts, categories, buckets, rules, instrument policy).
+3. Bring your history in once:
+   - from the original Google Sheet: follow [`docs/cutover.md`](docs/cutover.md);
+   - from any other tool: write a flat CSV in the layout of `config.example/ledger.csv`, then `make import FILE=path.csv ARGS=--dry-run`, and without `ARGS` when the report is clean.
+4. `make dev` and open <http://127.0.0.1:8080>. Backups start on their own (see below).
 
 ## Run locally
 
