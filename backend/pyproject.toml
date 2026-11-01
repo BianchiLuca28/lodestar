@@ -5,9 +5,11 @@ description = "Local-first, AI-assisted personal finance tracker"
 license = "AGPL-3.0-only"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "alembic>=1.20.1",
     "fastapi>=0.115",
     "httpx>=0.28.1",
     "pyyaml>=6.0.3",
+    "sqlmodel>=0.0.48",
     "uvicorn[standard]>=0.32",
 ]
 
