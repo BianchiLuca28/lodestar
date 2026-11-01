@@ -59,6 +59,18 @@ docker compose up -d          # needs Ollama running on the host
 open http://localhost:8080
 ```
 
+## Run locally
+
+Lodestar runs in Docker; Ollama runs natively on the host so it can use the GPU.
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend, and [Ollama](https://ollama.com/) for Windows. Start both.
+2. `cp .env.example .env` (optional for now: the defaults work).
+3. `make dev`, then open <http://127.0.0.1:8080>. The badge in the top right shows whether the backend and the LLM are reachable.
+
+The UI is bound to `127.0.0.1` only. The backend container reaches Ollama at `http://host.docker.internal:11434`; outside Docker it uses `http://127.0.0.1:11434` (`LODESTAR_LLM_BASE_URL` in `.env`).
+
+**"LLM non raggiungibile" in Docker while Ollama is running?** Ollama listens only on `127.0.0.1` by default. Make it listen on all interfaces: set the user environment variable `OLLAMA_HOST=0.0.0.0`, quit Ollama from the tray and start it again.
+
 ## Development
 
 Needs [uv](https://docs.astral.sh/uv/), [pnpm](https://pnpm.io/), Node 24 and GNU make.

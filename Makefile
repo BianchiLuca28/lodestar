@@ -3,10 +3,13 @@
 BACKEND := backend
 FRONTEND := frontend
 
-.PHONY: help test test-backend test-frontend lint lint-backend lint-frontend gen-api
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
+
+dev: ## Build and start the stack in Docker (UI on http://127.0.0.1:8080)
+	docker compose up --build
 
 test: test-backend test-frontend ## Run all tests
 
