@@ -2,6 +2,7 @@
 /config/
 /data/
 /data-demo/
+/data-restore-test/
 knowledge/*
 !knowledge/README.md
 evals/data/private/
