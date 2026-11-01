@@ -176,6 +176,9 @@ class XlsxLoader:
                     exclude_from_stats=_text(cell("Tracciamento in Entrate/Uscite")).lower()
                     == "no",
                 )
+                if line.amount == 0:  # placeholder rows, e.g. "opening" an account
+                    result.skipped.append(f"{LOG_SHEET} riga {number}: importo 0, non importata")
+                    continue
                 validate_line(line, catalog)
             except (_Bad, FieldError) as exc:
                 result.errors.append(RowError(number, f"{LOG_SHEET} · {exc.field}", str(exc)))
