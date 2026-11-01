@@ -2,8 +2,10 @@
 
 BACKEND := backend
 FRONTEND := frontend
+CONFIG ?= config
+DATA ?= data
 
-.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate import demo
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
@@ -38,3 +40,10 @@ eval: ## Run the parsing eval set (ARGS=--compare for before/after)
 
 migrate: ## Apply database migrations to data/lodestar.db (also runs at startup)
 	cd $(BACKEND) && LODESTAR_DATA_DIR=../data uv run python -c "from pathlib import Path; from lodestar.adapters.db.engine import migrate; migrate(Path('../data/lodestar.db'))"
+
+import: ## One-time import: make import FILE=path.csv [ARGS=--dry-run] [CONFIG=config DATA=data]
+	cd $(BACKEND) && uv run python -m lodestar.jobs.initial_import "$(abspath $(FILE))" --config "$(abspath $(CONFIG))" --data "$(abspath $(DATA))" $(ARGS)
+
+demo: ## Rebuild data-demo/ from the fake persona (config.example + ledger.csv)
+	rm -rf data-demo
+	$(MAKE) import FILE=config.example/ledger.csv CONFIG=config.example DATA=data-demo
