@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router";
 
 import { todayRome } from "@/lib/format";
 
+import { Balances } from "./Balances";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { type FilterKey, Filters, type FilterValues } from "./Filters";
 import { TransactionForm } from "./TransactionForm";
@@ -102,6 +103,7 @@ export function MovimentiPage() {
           onCancel={() => setAdding(false)}
         />
       )}
+      <Balances />
       <Filters
         values={filters}
         config={config.data}
