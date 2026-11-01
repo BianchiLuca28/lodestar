@@ -6,6 +6,7 @@ import { todayRome } from "@/lib/format";
 
 import { Balances } from "./Balances";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { ExportMenu } from "./ExportMenu";
 import { type FilterKey, Filters, type FilterValues } from "./Filters";
 import { TransactionForm } from "./TransactionForm";
 import { TransactionsTable } from "./TransactionsTable";
@@ -104,6 +105,9 @@ export function MovimentiPage() {
         />
       )}
       <Balances />
+      <div className="mb-2 flex justify-end">
+        <ExportMenu filters={filters} />
+      </div>
       <Filters
         values={filters}
         config={config.data}
