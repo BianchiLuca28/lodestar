@@ -97,11 +97,14 @@ def _plain(value: Decimal) -> Decimal:
     return Decimal(format(value.normalize(), "f"))
 
 
+def _key(title: str) -> str:
+    """Compare sheet names on letters and digits: "Log Entrate/Uscite" = "log entrate_uscite"."""
+    return "".join(ch for ch in title.casefold() if ch.isalnum())
+
+
 def _sheet(workbook: Any, name: str) -> Worksheet | None:
-    # Google Sheets keeps "/" in names; Excel turns it into "_". Match either.
-    wanted = name.replace("/", "_").casefold()
     for sheet in workbook.worksheets:
-        if sheet.title.replace("/", "_").casefold() == wanted:
+        if _key(sheet.title) == _key(name):
             return sheet  # type: ignore[no-any-return]
     return None
 
@@ -128,7 +131,9 @@ class XlsxLoader:
         try:
             log = _sheet(workbook, LOG_SHEET)
             if log is None:
-                result.errors.append(RowError(1, None, f"sheet {LOG_SHEET!r} not found"))
+                found = ", ".join(repr(sheet.title) for sheet in workbook.worksheets)
+                message = f"sheet {LOG_SHEET!r} not found; sheets in the file: {found}"
+                result.errors.append(RowError(1, None, message))
                 return result
             self._ledger(log, catalog, result)
             trades = _sheet(workbook, TRADES_SHEET)
