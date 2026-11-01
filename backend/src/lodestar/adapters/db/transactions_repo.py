@@ -1,5 +1,6 @@
 """Transactions in SQLite."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 
@@ -32,6 +33,18 @@ def _apply(line: LineInput, row: Transaction) -> None:
     row.note = line.note or None
     row.tag = line.tag or None
     row.exclude_from_stats = line.exclude_from_stats
+
+
+def _new_row(line: LineInput, source: str) -> Transaction:
+    row = Transaction(
+        date=line.date,
+        amount_cents=0,
+        category=line.category,
+        source=source,
+        created_at=datetime.now(UTC),
+    )
+    _apply(line, row)
+    return row
 
 
 class TransactionRepository:
@@ -79,20 +92,24 @@ class TransactionRepository:
             raise NotFound(f"transaction {transaction_id} not found")
         return row
 
+    def count(self) -> int:
+        with Session(self._engine) as session:
+            return session.exec(select(func.count()).select_from(Transaction)).one()
+
     def add(self, line: LineInput, source: str) -> Transaction:
-        row = Transaction(
-            date=line.date,
-            amount_cents=0,
-            category=line.category,
-            source=source,
-            created_at=datetime.now(UTC),
-        )
-        _apply(line, row)
+        row = _new_row(line, source)
         with Session(self._engine) as session:
             session.add(row)
             session.commit()
             session.refresh(row)
         return row
+
+    def add_many(self, lines: Sequence[LineInput], source: str) -> int:
+        """Insert every line in one database transaction: all or nothing."""
+        with Session(self._engine) as session:
+            session.add_all([_new_row(line, source) for line in lines])
+            session.commit()
+        return len(lines)
 
     def update(self, transaction_id: int, line: LineInput) -> Transaction:
         with Session(self._engine) as session:

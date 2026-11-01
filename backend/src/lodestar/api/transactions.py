@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from lodestar.adapters.db.tables import Transaction
 from lodestar.adapters.db.transactions_repo import Filters, TransactionRepository
 from lodestar.api.errors import ErrorResponse
+from lodestar.config.catalog import catalog_of
 from lodestar.config.models import AppConfig
 from lodestar.domain.direction import Direction, direction_of
 from lodestar.domain.ledger import Catalog, LineInput, validate_line
@@ -65,10 +66,7 @@ def get_repo(request: Request) -> TransactionRepository:
 
 def get_catalog(request: Request) -> Catalog:
     config: AppConfig = request.app.state.config
-    return Catalog(
-        accounts=frozenset(a.name for a in config.accounts),
-        categories={c.name: frozenset(c.subcategories) for c in config.categories},
-    )
+    return catalog_of(config)
 
 
 Repo = Annotated[TransactionRepository, Depends(get_repo)]
