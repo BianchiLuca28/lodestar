@@ -10,7 +10,9 @@
   "status": {
     "online": "Backend online · v{{version}}",
     "offline": "Backend unreachable",
-    "checking": "Checking backend…"
+    "checking": "Checking backend…",
+    "llmOnline": "LLM online",
+    "llmOffline": "LLM unreachable"
   },
   "page": {
     "placeholder": "Coming soon."
