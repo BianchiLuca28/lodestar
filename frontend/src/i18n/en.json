@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "panoramica": "Overview",
+    "inbox": "Inbox",
+    "movimenti": "Transactions",
+    "portafoglio": "Portfolio",
+    "piano": "Plan",
+    "chat": "Chat"
+  },
+  "status": {
+    "online": "Backend online · v{{version}}",
+    "offline": "Backend unreachable",
+    "checking": "Checking backend…"
+  },
+  "page": {
+    "placeholder": "Coming soon."
+  }
+}

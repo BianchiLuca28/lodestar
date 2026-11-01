@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "panoramica": "Panoramica",
+    "inbox": "Inbox",
+    "movimenti": "Movimenti",
+    "portafoglio": "Portafoglio",
+    "piano": "Piano",
+    "chat": "Chat"
+  },
+  "status": {
+    "online": "Backend attivo · v{{version}}",
+    "offline": "Backend non raggiungibile",
+    "checking": "Verifica backend…"
+  },
+  "page": {
+    "placeholder": "In arrivo."
+  }
+}
