@@ -3,7 +3,7 @@
 BACKEND := backend
 FRONTEND := frontend
 
-.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
@@ -29,3 +29,6 @@ lint-frontend: ## ESLint and tsc
 
 gen-api: ## Regenerate frontend API types from the backend OpenAPI schema
 	cd $(FRONTEND) && pnpm gen:api
+
+fake-ledger: ## Regenerate config.example/ledger.csv (seeded, deterministic)
+	cd $(BACKEND) && uv run python scripts/gen_fake_ledger.py
