@@ -78,6 +78,8 @@ def backup_if_due(db: Path, folder: Path, now: datetime) -> Path | None:
 
 
 def _check(file: Path) -> None:
+    if not file.is_file():
+        raise FileNotFoundError(f"{file} not found: pick a file listed in the backups folder")
     try:
         with sqlite3.connect(f"file:{file.as_posix()}?mode=ro", uri=True) as conn:
             tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master")}

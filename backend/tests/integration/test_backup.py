@@ -101,3 +101,8 @@ def test_app_startup_catches_up_with_a_backup(app: FastAPI) -> None:
         while not backups_in(folder) and time.monotonic() < deadline:
             time.sleep(0.05)
     assert len(backups_in(folder)) == 1
+
+
+def test_restore_names_a_missing_file(data: Path, tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="lodestar-YYYYMMDD-HHMMSS.db"):
+        restore(tmp_path / "lodestar-YYYYMMDD-HHMMSS.db", data / "lodestar.db")
