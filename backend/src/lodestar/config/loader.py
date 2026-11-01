@@ -81,7 +81,7 @@ def _cross_check(cfg: AppConfig) -> Iterator[str]:
     if trade_account not in accounts:
         yield f"settings.yaml → portfolio.trade_account: unknown account {trade_account!r}"
     imp = cfg.settings.initial_import
-    for label, mapping in imp.asset_classes.items():
+    for label, mapping in [*imp.asset_classes.items(), *imp.instruments.items()]:
         if mapping.bucket not in buckets:
             yield (
                 f"settings.yaml → initial_import.asset_classes.{label}.bucket: "
