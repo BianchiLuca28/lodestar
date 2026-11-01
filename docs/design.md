@@ -97,7 +97,7 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 | F18 | Notifications                | Monthly digest (required) + event alerts (optional) on Telegram                                                       | v0.5                      |
 | F19 | Knowledge base (RAG)         | Coletti material (~114 pages) indexed locally, cited in answers                                                       | v0.6                      |
 | F20 | Chat                         | One chat over ledger, portfolio, rules, plan and knowledge base                                                       | v0.6                      |
-| F21 | Backups                      | Nightly encrypted backup to S3 and/or a synced folder                                                                 | v0.1 (folder) · v0.2 (S3) |
+| F21 | Backups                      | Daily catch-up backup to a local folder; encrypted copy to S3                                                        | v0.1 (folder) · v0.2 (S3) |
 | F22 | Export                       | Ledger to XLSX/CSV at any time                                                                                        | v0.1                      |
 
 ## 3. Non-goals
@@ -142,7 +142,7 @@ The PC pulls from the relay; nothing on the internet can reach the PC. Price pro
 
 4.  **Bank reconciliation:** upload XLSX in the Inbox → deterministic parse → de-duplication against the ledger → drafts for new or uncertain lines.
 
-5.  **Backup:** nightly SQLite snapshot → `age` encryption → S3 and/or synced folder.
+5.  **Backup:** daily catch-up SQLite snapshot → local folder; `age` encryption → S3 (v0.2).
 
 ## 5. Data model
 
@@ -306,7 +306,7 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 **Infrastructure as code:** AWS SAM (or Terraform) in `infra/`; one `make deploy-relay`. Expected cost ≈ €0: API Gateway, Lambda and DynamoDB requests stay far below free-tier volumes for one person.
 
-**Backups (F21):** nightly job copies the SQLite file with the SQLite online backup API, encrypts it client-side with `age`, and writes it to the targets enabled in config: `s3` (lifecycle: 30 daily, 12 monthly) and/or `folder` (e.g. a OneDrive or Google Drive folder). AWS only ever sees ciphertext.
+**Backups (F21):** the PC may be on once a week, so there is no fixed time: at startup and then hourly, if the newest backup is over a day old, the job copies the SQLite file with the SQLite online backup API into the `folder` target (default `data/backups/`, plain SQLite copies). Retention keeps the newest backup of each of the last 30 days that have one and of the last 12 months. `make restore` puts one back, keeping the replaced database aside. Copies that leave the PC (`s3`, v0.2) are encrypted client-side with `age`, so AWS only ever sees ciphertext (ADR 0018).
 
 ## 8. UX: six pages and notifications
 
@@ -377,7 +377,7 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 | Prices           | `yfinance` (ETFs), Borsa Italiana/MOT scraper (BTPs), manual entry                                                                                       |
 | Excel            | `openpyxl` (import of the sheet and bank XLSX)                                                                                                           |
 | AWS relay        | Python Lambda, API Gateway HTTP API, DynamoDB, S3; AWS SAM                                                                                               |
-| Backups          | SQLite backup API + `age` encryption; S3 and/or folder targets                                                                                           |
+| Backups          | SQLite backup API; local folder (plain) and S3 (`age`-encrypted, v0.2)                                                                                   |
 | Quality          | pytest, Ruff, mypy (strict on `domain/`), Vitest + ESLint for the frontend, pre-commit                                                                   |
 | CI               | GitHub Actions: lint, type-check, tests, fast eval subset with a mocked LLM                                                                              |
 | Runtime          | Docker Desktop + WSL2 on Windows; `docker compose up`, `restart: unless-stopped`; Ollama reached at `host.docker.internal:11434`; UI on `localhost` only |

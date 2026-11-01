@@ -38,8 +38,8 @@ backup:
   schedule: daily
   targets:
     - kind: folder
-      path: ./data/backups
-      enabled: false
+      path: backups # under the data dir; an absolute path also works
+      enabled: true
     - kind: s3
       bucket: lodestar-backup-example
       region: eu-south-1
