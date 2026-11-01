@@ -73,6 +73,10 @@ def _cross_check(cfg: AppConfig) -> Iterator[str]:
     for dup in sorted({n for n in names if names.count(n) > 1}):
         yield f"categories.yaml → categories: duplicate category {dup!r}"
 
+    adjustment = cfg.settings.ledger.adjustment_category
+    if adjustment not in names:
+        yield f"settings.yaml → ledger.adjustment_category: unknown category {adjustment!r}"
+
     for i, rule in enumerate(cfg.rules):
         where = f"rules.yaml → rules[{i}]"
         for ref in rule.plan_section:

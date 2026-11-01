@@ -49,12 +49,17 @@ class NotificationsConfig(Strict):
     quiet_hours: list[str] = []
 
 
+class LedgerConfig(Strict):
+    adjustment_category: str  # category of the lines that close a balance-check gap
+
+
 class SettingsFile(Strict):
     locale: Literal["it", "en"] = "it"
     currency: Literal["EUR"] = "EUR"
     timezone: str = "Europe/Rome"
     llm: LlmConfig
     models: ModelsConfig
+    ledger: LedgerConfig
     backup: BackupConfig = BackupConfig()
     notifications: NotificationsConfig = NotificationsConfig()
 

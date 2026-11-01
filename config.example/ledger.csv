@@ -1,5 +1,5 @@
 date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_stats
-2026-01-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-01-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-01-01,58.31,Banca Aurora,,🥦 Spesa,Supermercato,Conad,,false
 2026-01-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-01-03,53.66,Carta Nebbia,,🥦 Spesa,Supermercato,Esselunga,,false
@@ -8,9 +8,9 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-01-05,39.00,Banca Aurora,,📺 Abbonamenti,Palestra,Palestra di quartiere,,false
 2026-01-07,73.01,Banca Aurora,,💡 Bollette,Gas,Bolletta gas,,false
 2026-01-07,40.54,Carta Nebbia,,🥦 Spesa,Supermercato,Esselunga,,false
-2026-01-08,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-01-08,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-01-08,57.23,Contanti,,🥦 Spesa,Supermercato,Coop,,false
-2026-01-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-01-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-01-10,16.03,Contanti,,🥦 Spesa,Supermercato,Coop,,false
 2026-01-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-01-12,38.83,Banca Aurora,,🥦 Spesa,Supermercato,Esselunga,,false
@@ -28,7 +28,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-01-27,64.12,Contanti,,🥦 Spesa,Supermercato,Coop,,false
 2026-01-27,18.00,Banca Aurora,,🎬 Svago,Libri,Libreria Coop,,false
 2026-01-28,41.11,Carta Nebbia,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
-2026-02-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-02-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-02-01,10.71,Banca Aurora,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-02-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-02-03,5.22,Contanti,,🍝 Ristoranti,Caffè,Colazione al bar,,false
@@ -39,10 +39,10 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-02-05,8.50,Contanti,,🚲 Trasporti,Bici,Camera d'aria bici,,false
 2026-02-06,58.50,Banca Aurora,,💡 Bollette,Gas,Bolletta gas,,false
 2026-02-07,29.30,Contanti,,🥦 Spesa,Supermercato,Esselunga,,false
-2026-02-08,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-02-08,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-02-08,60.48,Banca Aurora,,💡 Bollette,Luce,Bolletta luce,,false
 2026-02-08,34.89,Banca Aurora,,🛍️ Shopping,Vestiti,Maglione,,false
-2026-02-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-02-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-02-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-02-13,62.86,Carta Nebbia,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-02-14,24.59,Carta Nebbia,,🥦 Spesa,Mercato,Mercato delle Erbe,,false
@@ -57,7 +57,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-02-26,3.50,Contanti,,🍝 Ristoranti,Caffè,Colazione al bar,,false
 2026-02-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
 2026-02-27,23.88,Carta Nebbia,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
-2026-03-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-03-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-03-01,32.90,Contanti,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
 2026-03-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-03-04,12.99,Carta Nebbia,,📺 Abbonamenti,Streaming,Abbonamento streaming,,false
@@ -67,10 +67,10 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-03-05,39.00,Banca Aurora,,📺 Abbonamenti,Palestra,Palestra di quartiere,,false
 2026-03-05,8.42,Carta Nebbia,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-03-05,5.90,Banca Aurora,,🚲 Trasporti,Treno,Treno per Modena,,false
-2026-03-06,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-03-06,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-03-07,74.17,Banca Aurora,,💡 Bollette,Luce,Bolletta luce,,false
 2026-03-08,46.74,Banca Aurora,,🥦 Spesa,Panificio,Forno Bianchi,,false
-2026-03-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-03-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-03-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-03-14,62.76,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-03-14,39.98,Banca Aurora,,🥦 Spesa,Panificio,Forno Bianchi,,false
@@ -87,7 +87,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-03-26,24.11,Contanti,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-03-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
 2026-03-27,26.21,Carta Nebbia,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
-2026-04-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-04-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-04-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-04-03,30.60,Carta Nebbia,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
 2026-04-04,61.51,Banca Aurora,,💡 Bollette,Luce,Bolletta luce,,false
@@ -97,11 +97,11 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-04-05,39.00,Banca Aurora,,📺 Abbonamenti,Palestra,Palestra di quartiere,,false
 2026-04-05,21.13,Banca Aurora,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-04-05,8.07,Carta Nebbia,,🩺 Salute,Farmacia,Farmacia,,false
-2026-04-06,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-04-06,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-04-06,29.58,Contanti,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-04-06,5.83,Contanti,,🍝 Ristoranti,Caffè,Colazione al bar,,false
 2026-04-09,42.84,Contanti,,🥦 Spesa,Mercato,Mercato delle Erbe,,false
-2026-04-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-04-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-04-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-04-13,32.97,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-04-15,9.99,Banca Aurora,,💡 Bollette,Telefono,Ricarica telefono,,false
@@ -118,7 +118,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-04-27,11.94,Contanti,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-04-28,20.77,Banca Aurora,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
 2026-04-28,8.50,Banca Aurora,,🚲 Trasporti,Bici,Camera d'aria bici,,false
-2026-05-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-05-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-05-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-05-03,74.11,Banca Aurora,,💡 Bollette,Luce,Bolletta luce,,false
 2026-05-03,9.13,Contanti,,🥦 Spesa,Supermercato,Esselunga,,false
@@ -128,13 +128,13 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-05-05,39.00,Banca Aurora,,📺 Abbonamenti,Palestra,Palestra di quartiere,,false
 2026-05-06,34.03,Banca Aurora,,💡 Bollette,Gas,Bolletta gas,,false
 2026-05-08,9.88,Carta Nebbia,,🥦 Spesa,Supermercato,Coop,,false
-2026-05-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-05-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-05-10,5.90,Carta Nebbia,,🚲 Trasporti,Treno,Treno per Modena,,false
 2026-05-11,30.67,Banca Aurora,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-05-11,21.22,Carta Nebbia,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-05-11,8.72,Banca Aurora,,🍝 Ristoranti,Caffè,Colazione al bar,,false
 2026-05-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
-2026-05-13,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-05-13,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-05-13,23.95,Carta Nebbia,,🍝 Ristoranti,Aperitivo,Spritz con le colleghe,,false
 2026-05-14,9.26,Banca Aurora,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-05-14,3.72,Carta Nebbia,,🍝 Ristoranti,Caffè,Colazione al bar,,false
@@ -147,7 +147,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-05-25,30.67,Banca Aurora,,🍝 Ristoranti,Aperitivo,Spritz con le colleghe,,false
 2026-05-25,25.00,Contanti,,🎬 Svago,Concerti,Concerto all'Estragon,,false
 2026-05-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
-2026-06-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-06-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-06-01,23.33,Contanti,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
 2026-06-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-06-02,18.29,Carta Nebbia,,🥦 Spesa,Supermercato,Coop,,false
@@ -158,7 +158,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-06-06,58.70,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-06-06,52.47,Banca Aurora,,🥦 Spesa,Supermercato,Conad,,false
 2026-06-09,5.72,Banca Aurora,,🍝 Ristoranti,Caffè,Colazione al bar,,false
-2026-06-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-06-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-06-11,37.92,Carta Nebbia,,🍝 Ristoranti,Aperitivo,Spritz con le colleghe,,false
 2026-06-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-06-12,340.00,Banca Aurora,,🧳 Vacanze,Alloggio,"Appartamento Alfama, 4 notti",vacanza-lisbona-2026,false
@@ -168,7 +168,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-06-14,55.36,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-06-14,39.46,Contanti,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-06-14,24.00,Carta Nebbia,,🧳 Vacanze,Attività,Museo degli azulejos,vacanza-lisbona-2026,false
-2026-06-15,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-06-15,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-06-15,9.99,Banca Aurora,,💡 Bollette,Telefono,Ricarica telefono,,false
 2026-06-15,41.20,Carta Nebbia,,🍝 Ristoranti,Trattoria,Cena di pesce,vacanza-lisbona-2026,false
 2026-06-16,5.90,Banca Aurora,,🚲 Trasporti,Treno,Treno per Modena,,false
@@ -183,7 +183,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-06-26,18.04,Banca Aurora,,🍝 Ristoranti,Aperitivo,Spritz con le colleghe,,false
 2026-06-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
 2026-06-27,19.34,Banca Aurora,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
-2026-07-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-07-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-07-01,51.69,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-07-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-07-03,32.49,Carta Nebbia,,🥦 Spesa,Supermercato,Conad,,false
@@ -196,14 +196,14 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-07-06,59.44,Contanti,,🥦 Spesa,Supermercato,Conad,,false
 2026-07-06,12.44,Carta Nebbia,,🩺 Salute,Farmacia,Farmacia,,false
 2026-07-07,120.00,Banca Aurora,,🎬 Svago,Concerti,Biglietti concerto per il gruppo,,true
-2026-07-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-07-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-07-10,54.90,Banca Aurora,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-07-10,24.09,Carta Nebbia,,🍝 Ristoranti,Pizzeria,Pizzeria La Lanterna,,false
 2026-07-10,120.00,,Banca Aurora,🎬 Svago,Concerti,Il gruppo mi ha ridato i biglietti,,true
 2026-07-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-07-13,8.01,Banca Aurora,,🍝 Ristoranti,Caffè,Colazione al bar,,false
 2026-07-14,34.00,Carta Nebbia,,🎬 Svago,Giochi,Gioco da tavolo,,false
-2026-07-15,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-07-15,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-07-15,9.99,Banca Aurora,,💡 Bollette,Telefono,Ricarica telefono,,false
 2026-07-16,8.43,Carta Nebbia,,🥦 Spesa,Supermercato,Conad,,false
 2026-07-18,46.83,Carta Nebbia,,🥦 Spesa,Mercato,Mercato delle Erbe,,false
@@ -214,7 +214,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-07-24,5.90,Banca Aurora,,🚲 Trasporti,Treno,Treno per Modena,,false
 2026-07-24,18.00,Banca Aurora,,🎬 Svago,Libri,Libreria Coop,,false
 2026-07-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
-2026-08-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-08-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-08-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-08-02,59.00,Banca Aurora,,🛍️ Shopping,Scarpe,Scarpe sbagliate,,false
 2026-08-03,62.18,Banca Aurora,,💡 Bollette,Gas,Bolletta gas,,false
@@ -225,9 +225,9 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-08-05,18.00,Contanti,,🎬 Svago,Libri,Libreria Coop,,false
 2026-08-06,25.31,Contanti,,🍝 Ristoranti,Pizzeria,Pizzeria La Lanterna,,false
 2026-08-08,8.50,Carta Nebbia,,🚲 Trasporti,Bici,Camera d'aria bici,,false
-2026-08-09,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-08-09,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-08-09,59.00,,Banca Aurora,🛍️ Shopping,Scarpe,Reso scarpe,,false
-2026-08-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-08-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-08-10,25.71,Banca Aurora,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-08-11,47.69,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-08-11,41.64,Contanti,,🍝 Ristoranti,Aperitivo,Spritz con le colleghe,,false
@@ -245,7 +245,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-08-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
 2026-08-27,38.68,Banca Aurora,,🥦 Spesa,Supermercato,Coop,,false
 2026-08-27,34.65,Banca Aurora,,🛍️ Shopping,Scarpe,Scarpe da corsa,,false
-2026-09-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-09-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-09-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
 2026-09-02,43.01,Banca Aurora,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false
 2026-09-03,25.00,Banca Aurora,,🎬 Svago,Concerti,Concerto all'Estragon,,false
@@ -255,14 +255,14 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-09-05,39.00,Banca Aurora,,📺 Abbonamenti,Palestra,Palestra di quartiere,,false
 2026-09-05,139.00,Banca Aurora,,🩺 Salute,Visite,Visita dentistica,,false
 2026-09-06,41.59,Banca Aurora,,💡 Bollette,Gas,Bolletta gas,,false
-2026-09-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-09-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-09-10,55.05,Contanti,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-09-11,19.75,Banca Aurora,,🥦 Spesa,Supermercato,Conad,,false
 2026-09-11,15.78,Contanti,,🥦 Spesa,Mercato,Mercato delle Erbe,,false
 2026-09-11,35.71,Contanti,,🍝 Ristoranti,Pizzeria,Pizzeria La Lanterna,,false
 2026-09-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-09-13,9.77,Carta Nebbia,,🥦 Spesa,Mercato,Mercato delle Erbe,,false
-2026-09-15,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-09-15,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-09-15,9.99,Banca Aurora,,💡 Bollette,Telefono,Ricarica telefono,,false
 2026-09-17,25.19,Contanti,,🥦 Spesa,Panificio,Forno Bianchi,,false
 2026-09-17,8.50,Carta Nebbia,,🚲 Trasporti,Bici,Camera d'aria bici,,false
@@ -275,7 +275,7 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-09-25,5.90,Banca Aurora,,🚲 Trasporti,Treno,Treno per Modena,,false
 2026-09-27,2150.00,,Banca Aurora,💰 Stipendio,Mensilità,Stipendio,,false
 2026-09-28,7.44,Carta Nebbia,,🍝 Ristoranti,Caffè,Colazione al bar,,false
-2026-10-01,720.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
+2026-10-01,600.00,Banca Aurora,,🏡 Affitto,Canone,Affitto via Saragozza,,false
 2026-10-01,30.19,Contanti,,🥦 Spesa,Supermercato,Coop,,false
 2026-10-01,62.99,Banca Aurora,,🛍️ Shopping,Vestiti,Maglione,,false
 2026-10-02,650.00,Banca Aurora,Broker Orsa,📊 Investimenti,ETF,Bonifico mensile al broker,,false
@@ -287,12 +287,12 @@ date,amount,from_account,to_account,category,subcategory,note,tag,exclude_from_s
 2026-10-06,8.50,Banca Aurora,,🚲 Trasporti,Bici,Camera d'aria bici,,false
 2026-10-07,6.26,Carta Nebbia,,🍝 Ristoranti,Caffè,Colazione al bar,,false
 2026-10-08,10.29,Carta Nebbia,,🩺 Salute,Farmacia,Farmacia,,false
-2026-10-10,100.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
+2026-10-10,200.00,Banca Aurora,Carta Nebbia,❓ Varie,,Ricarica carta,,false
 2026-10-10,4.73,Banca Aurora,,🍝 Ristoranti,Caffè,Colazione al bar,,false
 2026-10-11,8.50,Carta Nebbia,,🚲 Trasporti,Bici,Camera d'aria bici,,false
 2026-10-12,27.99,Banca Aurora,,💡 Bollette,Internet,Fibra casa,,false
 2026-10-12,34.03,Contanti,,🥦 Spesa,Supermercato,Esselunga,,false
-2026-10-15,80.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
+2026-10-15,150.00,Banca Aurora,Contanti,❓ Varie,,Prelievo bancomat,,false
 2026-10-15,9.99,Banca Aurora,,💡 Bollette,Telefono,Ricarica telefono,,false
 2026-10-16,34.79,Carta Nebbia,,🥦 Spesa,Supermercato,Esselunga,,false
 2026-10-16,26.99,Carta Nebbia,,🍝 Ristoranti,Trattoria,Trattoria da Nino,,false

@@ -14,6 +14,9 @@ models:
   vision: null # chosen in v0.4
   embed: bge-m3
 
+ledger:
+  adjustment_category: ❓ Varie # balance-check adjustments (Rettifica)
+
 backup:
   schedule: daily
   targets:

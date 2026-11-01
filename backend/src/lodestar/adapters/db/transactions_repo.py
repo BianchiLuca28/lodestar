@@ -8,9 +8,10 @@ from sqlalchemy import Engine, func, or_
 from sqlmodel import Session, col, select
 
 from lodestar.adapters.db.tables import BalanceCheck, Transaction
+from lodestar.domain.balances import AccountTotals
 from lodestar.domain.errors import Conflict, NotFound
 from lodestar.domain.ledger import LineInput
-from lodestar.domain.money import to_cents
+from lodestar.domain.money import from_cents, to_cents
 
 
 @dataclass(frozen=True)
@@ -35,7 +36,7 @@ def _apply(line: LineInput, row: Transaction) -> None:
     row.exclude_from_stats = line.exclude_from_stats
 
 
-def _new_row(line: LineInput, source: str) -> Transaction:
+def new_row(line: LineInput, source: str) -> Transaction:
     row = Transaction(
         date=line.date,
         amount_cents=0,
@@ -92,12 +93,25 @@ class TransactionRepository:
             raise NotFound(f"transaction {transaction_id} not found")
         return row
 
+    def totals(self, account: str, until: date) -> AccountTotals:
+        """Money in and out of an account up to and including a date (implements LedgerTotals)."""
+
+        def total(side: str) -> int:
+            column = col(getattr(Transaction, side))
+            query = select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(
+                column == account, Transaction.date <= until
+            )
+            with Session(self._engine) as session:
+                return int(session.exec(query).one())
+
+        return AccountTotals(from_cents(total("to_account")), from_cents(total("from_account")))
+
     def count(self) -> int:
         with Session(self._engine) as session:
             return session.exec(select(func.count()).select_from(Transaction)).one()
 
     def add(self, line: LineInput, source: str) -> Transaction:
-        row = _new_row(line, source)
+        row = new_row(line, source)
         with Session(self._engine) as session:
             session.add(row)
             session.commit()
@@ -107,7 +121,7 @@ class TransactionRepository:
     def add_many(self, lines: Sequence[LineInput], source: str) -> int:
         """Insert every line in one database transaction: all or nothing."""
         with Session(self._engine) as session:
-            session.add_all([_new_row(line, source) for line in lines])
+            session.add_all([new_row(line, source) for line in lines])
             session.commit()
         return len(lines)
 

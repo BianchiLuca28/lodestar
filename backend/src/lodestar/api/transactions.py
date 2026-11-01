@@ -73,7 +73,7 @@ Repo = Annotated[TransactionRepository, Depends(get_repo)]
 Cat = Annotated[Catalog, Depends(get_catalog)]
 
 
-def _out(row: Transaction) -> TransactionOut:
+def to_out(row: Transaction) -> TransactionOut:
     assert row.id is not None
     return TransactionOut(
         id=row.id,
@@ -110,27 +110,27 @@ def list_transactions(
 ) -> TransactionPage:
     filters = Filters(date_from, date_to, account, category, tag, q)
     rows, total = repo.list(filters, limit, offset)
-    return TransactionPage(items=[_out(r) for r in rows], total=total)
+    return TransactionPage(items=[to_out(r) for r in rows], total=total)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_transaction(data: TransactionIn, repo: Repo, catalog: Cat) -> TransactionOut:
     line = _line(data)
     validate_line(line, catalog)
-    return _out(repo.add(line, source="manual"))
+    return to_out(repo.add(line, source="manual"))
 
 
 @router.patch("/{transaction_id}")
 def update_transaction(
     transaction_id: int, patch: TransactionPatch, repo: Repo, catalog: Cat
 ) -> TransactionOut:
-    current = _out(repo.get(transaction_id))
+    current = to_out(repo.get(transaction_id))
     merged = TransactionIn.model_validate(
         current.model_dump() | patch.model_dump(exclude_unset=True)
     )
     line = _line(merged)
     validate_line(line, catalog)
-    return _out(repo.update(transaction_id, line))
+    return to_out(repo.update(transaction_id, line))
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)

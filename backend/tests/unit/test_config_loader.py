@@ -113,3 +113,13 @@ def test_no_pension_fund_in_example() -> None:
         text = path.read_text(encoding="utf-8").lower()
         for word in ("pension", "fondo pensione", "previdenz"):
             assert word not in text, f"{path.name} mentions {word!r} (ADR 0017)"
+
+
+def test_adjustment_category_must_exist(cfg_dir: Path) -> None:
+    edit(cfg_dir, "settings.yaml", lambda d: d["ledger"].update(adjustment_category="🛸 Ufo"))
+    message = error_for(cfg_dir)
+    assert "settings.yaml" in message and "ledger.adjustment_category" in message
+
+
+def test_example_adjustment_category() -> None:
+    assert load_config(EXAMPLE).settings.ledger.adjustment_category == "❓ Varie"

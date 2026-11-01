@@ -69,6 +69,19 @@
       "choose": "Choose…",
       "none": "—",
       "genericError": "Could not save. Try again."
+    },
+    "balances": {
+      "title": "Balances",
+      "check": "Check balance",
+      "dialogTitle": "Check balance · {{account}}",
+      "real": "Real balance",
+      "calculate": "Compute gap",
+      "confirm": "Confirm",
+      "computed": "Computed balance",
+      "gap": "Gap",
+      "noGap": "Balance is right: no adjustment needed.",
+      "adjustmentHint": "Confirming creates an adjustment excluded from stats.",
+      "lastCheck": "Last check: {{date}} · gap {{gap}}"
     }
   },
   "error": {
