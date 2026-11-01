@@ -9,6 +9,7 @@ services:
       # Ollama runs natively on the Windows host, outside Docker.
       LODESTAR_LLM_BASE_URL: http://host.docker.internal:11434
       LODESTAR_CONFIG_DIR: /app/config
+      LODESTAR_DATA_DIR: /app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

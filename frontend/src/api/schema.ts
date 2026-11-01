@@ -68,6 +68,13 @@ export interface components {
             /** Categories */
             categories: components["schemas"]["CategoryOut"][];
         };
+        /** DatabaseStatus */
+        DatabaseStatus: {
+            /** Reachable */
+            reachable: boolean;
+            /** Revision */
+            revision: string | null;
+        };
         /** HealthResponse */
         HealthResponse: {
             /**
@@ -78,6 +85,7 @@ export interface components {
             /** Version */
             version: string;
             llm: components["schemas"]["LlmStatus"];
+            database: components["schemas"]["DatabaseStatus"];
         };
         /** LlmStatus */
         LlmStatus: {

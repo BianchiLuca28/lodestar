@@ -1,27 +1,23 @@
 from importlib.metadata import version
-from pathlib import Path
 
 import httpx
 import pytest
 import respx
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from lodestar.config.loader import load_config
-from lodestar.config.settings import Settings
-from lodestar.main import create_app
+TEST_LLM_URL = "http://llm.test:11434"  # matches the settings fixture in conftest.py
 
-EXAMPLE = Path(__file__).parents[3] / "config.example"
-BASE_URL = "http://llm.test:11434"
-MODELS_URL = f"{BASE_URL}/v1/models"
+MODELS_URL = f"{TEST_LLM_URL}/v1/models"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(create_app(load_config(EXAMPLE), Settings(llm_base_url=BASE_URL)))
+def client(app: FastAPI) -> TestClient:
+    return TestClient(app)
 
 
 @respx.mock
-def test_health_reports_ok_version_and_reachable_llm(client: TestClient) -> None:
+def test_health_reports_ok_version_llm_and_database(client: TestClient) -> None:
     respx.get(MODELS_URL).mock(return_value=httpx.Response(200, json={"data": []}))
 
     response = client.get("/api/health")
@@ -30,7 +26,8 @@ def test_health_reports_ok_version_and_reachable_llm(client: TestClient) -> None
     assert response.json() == {
         "status": "ok",
         "version": version("lodestar"),
-        "llm": {"reachable": True, "base_url": BASE_URL},
+        "llm": {"reachable": True, "base_url": TEST_LLM_URL},
+        "database": {"reachable": True, "revision": "0001"},
     }
 
 
@@ -41,7 +38,7 @@ def test_health_reports_llm_unreachable_when_connection_refused(client: TestClie
     body = client.get("/api/health").json()
 
     assert body["status"] == "ok"
-    assert body["llm"] == {"reachable": False, "base_url": BASE_URL}
+    assert body["llm"] == {"reachable": False, "base_url": TEST_LLM_URL}
 
 
 @respx.mock
@@ -58,9 +55,7 @@ def test_health_reports_llm_unreachable_on_error_status(client: TestClient) -> N
     assert client.get("/api/health").json()["llm"]["reachable"] is False
 
 
-def test_health_schema_is_in_openapi() -> None:
-    schemas = create_app(load_config(EXAMPLE), Settings(llm_base_url=BASE_URL)).openapi()[
-        "components"
-    ]["schemas"]
+def test_health_schema_is_in_openapi(app: FastAPI) -> None:
+    schemas = app.openapi()["components"]["schemas"]
 
-    assert {"HealthResponse", "LlmStatus"} <= schemas.keys()
+    assert {"HealthResponse", "LlmStatus", "DatabaseStatus"} <= schemas.keys()

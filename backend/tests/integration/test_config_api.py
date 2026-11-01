@@ -1,16 +1,9 @@
-from pathlib import Path
-
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from lodestar.config.loader import load_config
-from lodestar.main import create_app
 
-EXAMPLE = Path(__file__).parents[3] / "config.example"
-
-
-def test_config_endpoint_returns_accounts_and_categories() -> None:
-    client = TestClient(create_app(load_config(EXAMPLE)))
-    body = client.get("/api/config").json()
+def test_config_endpoint_returns_accounts_and_categories(app: FastAPI) -> None:
+    body = TestClient(app).get("/api/config").json()
     accounts = {a["name"]: a for a in body["accounts"]}
     assert accounts["Banca Aurora"] == {
         "name": "Banca Aurora",

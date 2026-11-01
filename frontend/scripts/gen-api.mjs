@@ -1,6 +1,8 @@
 // Regenerates src/api/schema.ts from the backend's OpenAPI schema, without starting the server.
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import openapiTS, { astToString } from "openapi-typescript";
@@ -9,7 +11,8 @@ const backend = fileURLToPath(new URL("../../backend", import.meta.url));
 const json = execFileSync(
   "uv",
   ["run", "python", "-c", "import json; from pathlib import Path; from lodestar.config.loader import load_config; from lodestar.main import create_app; print(json.dumps(create_app(load_config(Path('../config.example'))).openapi()))"],
-  { cwd: backend, encoding: "utf-8" },
+  // A throwaway data dir: building the app runs migrations.
+  { cwd: backend, encoding: "utf-8", env: { ...process.env, LODESTAR_DATA_DIR: mkdtempSync(join(tmpdir(), "lodestar-")) } },
 );
 
 const ast = await openapiTS(JSON.parse(json));
