@@ -77,7 +77,7 @@ make backup
 ```
 
 - [ ] It prints `Backup written: …/data/backups/lodestar-YYYYMMDD-HHMMSS.db`.
-- [ ] Test the restore **into a throwaway folder**, so the real database is not touched:
+- [ ] Test the restore **into a throwaway folder**, so the real database is not touched. Replace `YYYYMMDD-HHMMSS` with the name `make backup` just printed:
 
 ```bash
 make restore FILE=data/backups/lodestar-YYYYMMDD-HHMMSS.db DATA=data-restore-test
