@@ -31,7 +31,7 @@ def model(*answers: object) -> Recording:
 
 def line(**kw: Any) -> dict[str, Any]:
     base = {
-        "date": "2026-03-14",
+        "date_text": None,
         "amount": "50.00",
         "from_account": "Banca Aurora",
         "to_account": None,
@@ -82,10 +82,45 @@ def test_two_bad_answers_give_a_draft_flagged_for_review() -> None:
 
 
 def test_a_future_date_is_rejected() -> None:
-    fake = model({"lines": [line(date="2026-03-20")]}, {"lines": [line()]})
+    fake = model({"lines": [line(date_text="20/03/2026")]}, {"lines": [line()]})
     result = parse_message(fake, context(), "pizza 50", SENT)
     assert "future" in str(fake.prompts[1][-1].content)
     assert result.lines[0].date == date(2026, 3, 14)
+
+
+def test_the_date_words_are_resolved_in_code_from_the_send_day() -> None:
+    # SENT is Saturday 14 March 2026 in Rome.
+    fake = model(
+        {
+            "lines": [
+                line(date_text="giovedì"),
+                line(date_text="ieri"),
+                line(date_text="il 2 marzo"),
+                line(date_text=None),
+            ]
+        }
+    )
+    result = parse_message(fake, context(), "gelato giovedì 3, ...", SENT)
+    assert [r.date for r in result.lines] == [
+        date(2026, 3, 12),
+        date(2026, 3, 13),
+        date(2026, 3, 2),
+        date(2026, 3, 14),
+    ]
+    assert result.review_note is None
+
+
+def test_a_date_computed_by_the_model_is_ignored() -> None:
+    fake = model({"lines": [line(date="2026-01-01", date_text="ieri")]})
+    assert parse_message(fake, context(), "ieri pizza", SENT).lines[0].date == date(2026, 3, 13)
+
+
+def test_unclear_date_words_flag_the_draft_without_guessing_or_retrying() -> None:
+    fake = model({"lines": [line(date_text="la settimana scorsa")]})
+    result = parse_message(fake, context(), "pizza la settimana scorsa 50", SENT)
+    assert result.review_note is not None and "la settimana scorsa" in result.review_note
+    assert result.lines[0].date == date(2026, 3, 14)  # placeholder the user must check
+    assert len(fake.prompts) == 1
 
 
 def test_no_lines_is_an_error() -> None:
@@ -95,7 +130,7 @@ def test_no_lines_is_an_error() -> None:
 
 def test_prompt_gives_the_send_date_in_rome_with_its_weekday_and_the_catalog() -> None:
     late = datetime(2026, 3, 14, 23, 30, tzinfo=UTC)  # already Sunday 15 in Rome
-    fake = model({"lines": [line(date="2026-03-15")]})
+    fake = model({"lines": [line()]})
     parse_message(fake, context(), "ieri pizza", late)
     system = str(fake.prompts[0][0].content)
     assert "2026-03-15 (Sunday)" in system
