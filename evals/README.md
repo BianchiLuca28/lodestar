@@ -23,7 +23,7 @@ One JSON object per line:
 
 ## Your private cases
 
-1. `make eval-gen-private` samples ~100 rows from `data/lodestar.db` (every category represented) and has the local model write the message you would have sent for each. It writes `data/private/cases.draft.jsonl`.
+1. `make eval-gen-private` samples ~100 rows from `data/lodestar.db` (every category represented) and has the local model write the message you would have sent for each. About 30% of cases are “sent” 1–6 days after the transaction, and their message must say when it happened in words (“ieri”, “giovedì”, “il 2 novembre”), so dates are tested too. It writes `data/private/cases.draft.jsonl`.
 2. Read every line. Fix the `message` so it sounds like you, fix `expected` if the row itself was odd, and delete cases you do not want.
 3. Save the result as `data/private/cases.jsonl`.
 4. `make eval ARGS="--live --private"` runs them; results go to `results/private/`. Each case leaves its own row out of its few-shot examples.

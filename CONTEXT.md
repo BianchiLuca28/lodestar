@@ -60,6 +60,9 @@ The cloud queue that holds inbound messages until the user's PC collects them.
 One or more proposed transactions produced from an inbound message, a bank import or a receipt, waiting for the user to approve, edit or reject. Only approval turns a draft into transactions.
 _Avoid_: suggestion, pending transaction
 
+**Date words** (_Parole della data_):
+The words of a message that say when something happened ("ieri", "giovedì", "il 2 novembre"). The parser copies them verbatim; code turns them into a date relative to the message's send day.
+
 **Example index**:
 Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and updated on every approval.
 _Avoid_: memory, training data
