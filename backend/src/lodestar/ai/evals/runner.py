@@ -13,10 +13,15 @@ import time
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lodestar.ai.evals.metrics import score
 from lodestar.ai.evals.predictor import Predictor, ScriptedPredictor
 from lodestar.ai.evals.schema import Case, load_cases
+
+if TYPE_CHECKING:
+    from lodestar.adapters.db.examples_index import ExampleIndex
+    from lodestar.adapters.embeddings import Embedder
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 DEFAULT_DATASET = REPO_ROOT / "evals" / "datasets" / "parsing" / "cases.jsonl"
@@ -87,10 +92,20 @@ def run(
     return path, _table(metrics, before)
 
 
+def private_index(embedder: "Embedder", model: str) -> "ExampleIndex":
+    """The example index over the real ledger, schema upgraded first (as the app does at start)."""
+    from lodestar.adapters.db.engine import migrate
+    from lodestar.adapters.db.examples_index import ExampleIndex
+
+    migrate(PRIVATE_DB)
+    index = ExampleIndex(PRIVATE_DB, embedder, model)
+    index.sync()
+    return index
+
+
 def _live(
     config_dir: Path, model: str | None, examples: bool, work_dir: Path, private: bool
 ) -> Predictor:
-    from lodestar.adapters.db.examples_index import ExampleIndex
     from lodestar.adapters.embeddings import OpenAICompatEmbedder
     from lodestar.adapters.llm import chat_model
     from lodestar.ai.evals.graph_predictor import GraphPredictor, fake_ledger_index
@@ -106,8 +121,7 @@ def _live(
         embed = config.settings.models.embed
         embedder = OpenAICompatEmbedder(base_url, embed)
         if private:  # the real ledger; each case leaves its own row out of its examples
-            index = ExampleIndex(PRIVATE_DB, embedder, embed)
-            index.sync()
+            index = private_index(embedder, embed)
         else:
             index = fake_ledger_index(config_dir, work_dir, embedder, embed)
     ctx = ParseContext.from_config(config)
