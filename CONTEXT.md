@@ -61,7 +61,7 @@ One or more proposed transactions produced from an inbound message, a bank impor
 _Avoid_: suggestion, pending transaction
 
 **Example index**:
-Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and updated on every approval.
+Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and kept in step with every approval and every later edit, so corrections become the parser's habits.
 _Avoid_: memory, training data
 
 **Possible duplicate** (_Possibile duplicato_):

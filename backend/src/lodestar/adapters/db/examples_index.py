@@ -1,7 +1,8 @@
 """Few-shot example index: past transactions embedded and searched with sqlite-vec (design §6.1).
 
-Each transaction with a note is embedded once per embedding model; `sync` fills the gaps, so it
-runs at startup, after each poll and after every approval. Search is an exact cosine scan with
+Each transaction with a note is embedded once per embedding model; `sync` fills the gaps and
+re-embeds edited notes, so it runs at startup, after each poll, after every approval and after
+every edit of a transaction. Search is an exact cosine scan with
 `vec_distance_cosine`, plenty for a personal ledger.
 """
 
@@ -50,7 +51,13 @@ class ExampleIndex:
     def sync(self) -> int:
         """Embed every transaction with a note that has no vector for the current model."""
         with self._connect() as conn:
-            conn.execute("DELETE FROM transaction_embeddings WHERE model != ?", (self._model,))
+            # Stale vectors: another embedding model, or a note edited after it was embedded.
+            # Category and accounts are read live from `transactions`, so edits there need nothing.
+            conn.execute(
+                "DELETE FROM transaction_embeddings WHERE model != ? OR text IS NOT"
+                " (SELECT note FROM transactions t WHERE t.id = transaction_id)",
+                (self._model,),
+            )
             rows = conn.execute(
                 "SELECT t.id, t.note FROM transactions t"
                 " LEFT JOIN transaction_embeddings e ON e.transaction_id = t.id"

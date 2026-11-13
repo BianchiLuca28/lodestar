@@ -10,6 +10,7 @@ from sqlmodel import Session
 
 from lodestar.adapters.db.drafts_repo import DraftRepository
 from lodestar.adapters.db.examples_index import ExampleIndex
+from lodestar.adapters.db.tables import Transaction
 from lodestar.adapters.db.transactions_repo import new_row
 from lodestar.adapters.embeddings import HashingEmbedder
 from lodestar.ai.evals.graph_predictor import fake_ledger_index
@@ -109,3 +110,33 @@ def test_eval_index_is_built_from_the_fake_ledger(tmp_path: Path) -> None:
     index = fake_ledger_index(config, tmp_path, HashingEmbedder(), "fake")
     [example] = index.nearest("Conad", k=1)
     assert example.note == "Conad" and example.category == "🥦 Spesa"
+
+
+def test_an_edited_note_is_re_embedded(ledger: FastAPI) -> None:
+    index = ExampleIndex(ledger.state.db_path, HashingEmbedder(), "fake")
+    index.sync()
+    with Session(ledger.state.engine) as session:
+        row = session.get(Transaction, 3)
+        assert row is not None and row.note == "Conad"
+        row.note = "Pam Panorama"
+        session.add(row)
+        session.commit()
+    assert index.sync() == 1
+    assert index.nearest("pam panorama", k=1)[0].note == "Pam Panorama"
+
+
+def test_a_deleted_transaction_leaves_the_index(ledger: FastAPI) -> None:
+    index = ExampleIndex(ledger.state.db_path, HashingEmbedder(), "fake")
+    index.sync()
+    with Session(ledger.state.engine) as session:
+        row = session.get(Transaction, 3)
+        session.delete(row)
+        session.commit()
+    assert all(e.note != "Conad" for e in index.nearest("conad", k=5))
+
+
+def test_editing_a_note_in_movimenti_updates_the_index(ledger: FastAPI) -> None:
+    ledger.state.examples.sync()
+    response = TestClient(ledger).patch("/api/transactions/3", json={"note": "Pam Panorama"})
+    assert response.status_code == 200
+    assert ledger.state.examples.nearest("pam panorama", k=1)[0].note == "Pam Panorama"
