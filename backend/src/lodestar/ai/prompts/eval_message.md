@@ -1,4 +1,4 @@
-version: 1
+version: 2
 
 You write test data for a personal finance tracker. The user logs each expense or income by sending a short Italian Telegram message right after it happens. Write the message this user would most plausibly have sent for the transaction below.
 
@@ -11,5 +11,7 @@ Transaction:
 - to account: {to_account}
 - category: {category} / {subcategory}
 - note: {note}
+
+When: {when}
 
 Answer with the message only.

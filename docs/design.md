@@ -230,7 +230,14 @@ A LangGraph graph turns one inbound message into one draft:
 
 6.  **Corrections:** a reply to the draft in Telegram (“no, era contanti”) or an edit in the web app produces a new draft version. Telegram replies go back through step 3 with the previous draft as context.
 
-Dates: “oggi” by default; “ieri”, “sabato”, “il 3” resolved relative to the message's send time, not the time it was processed.
+**Dates are computed in code (ADR 0021).**
+- The LLM only copies the date words verbatim into `date_text`.
+- A `resolve_dates` step between extract and validate turns them into a date with `domain/dates.py`, relative to the message's send day in Europe/Rome, not the time it was processed.
+- No words means today.
+- Supported: “oggi”, “ieri”, “l'altro ieri”, “N giorni fa”, weekdays (“giovedì”, “venerdì scorso”), “il 3”, “il 2 novembre”, “2/11”, “2/11/2026”, with an optional preposition (“del 30 ottobre”) and an optional matching weekday (“giovedì 12”).
+- Without a year, the date is the most recent one not after the send day.
+- Anything else (“la settimana scorsa”, a weekday that contradicts the day number) is not guessed: the line gets today's date as a placeholder and the draft a review note. It is not retried.
+- The parser stays a fixed workflow, not an agent: every message needs the same steps.
 
 ### 6.2 Rules engine (v0.5)
 
@@ -257,7 +264,7 @@ The Regole form on the Piano page edits these values; the YAML stays hand-editab
 
 ### 6.3 Plan agent (v0.5)
 
-A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (parameterised queries, never free SQL), `get_portfolio`, `get_planned_expenses`, `read_plan_section`, `search_instruments`. It produces the monthly digest and answers “what should I do this month?”.
+A ReAct agent (ADR 0021, guidelines in §6.4) with read-only tools: `get_rule_status`, `query_ledger` (parameterised queries, never free SQL), `get_portfolio`, `get_planned_expenses`, `read_plan_section`, `search_instruments`. It produces the monthly digest and answers “what should I do this month?”.
 
 **Instrument policy** (`instrument_policy.yaml`, written by you, from plan §6.4, §6.5 and §6.9): per bucket the allowed instruments (P2 XEON; P3 Italian and German fixed-rate government bonds, single repayment, price below 100, frequently traded, maturing on or before the expected house date; P4 VWCE, plus EIMI only once confirmed), and the never-buy list (BTP Valore/Italia/Più, inflation-linked, CCT, French, Belgian and Austrian bonds, bond ETFs, thematic, single-country and leveraged ETFs, single stocks, crypto, commodities, insurance products).
 
@@ -267,7 +274,31 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 - **Indexing:** the Coletti PDFs (~114 pages) in `knowledge/` are split by section (~500 tokens, 15% overlap), embedded with `bge-m3`, stored in SQLite via `sqlite-vec`. Re-indexed when files change.
 
-- **Chat:** a LangGraph agent with the plan-agent tools plus `search_knowledge`. Every answer cites its sources: page numbers for the course material, rule names for the plan, dates for ledger rows.
+- **Chat:** a ReAct agent (ADR 0021) with the plan-agent tools plus `search_knowledge`. The model decides by itself which tools to call and in what order. Every answer cites its sources: page numbers for the course material, rule names for the plan, dates for ledger rows.
+
+- **Agent guidelines (chat and plan agent).** These must be met before the agent ships.
+  1. **Loop.** Hand-written LangGraph ReAct graph: `agent` node (chat model with `bind_tools`) → `tools` node (`ToolNode`) → back to `agent` until it answers. It uses native tool calling over the OpenAI-compatible endpoint; the model in `models.chat` must support it, and the eval checks that.
+  2. **Tools.**
+     - Read-only, narrow, with typed Pydantic arguments, for example `query_ledger(filters)` and never raw SQL.
+     - Each has a description written for the model: what it returns, when to use it, and limits.
+     - Results are compact, structured and carry ids or dates for citations, with paging and a row cap.
+     - Tool errors come back to the model as tool messages it can recover from, not as crashes.
+  3. **Budgets.** At most 8 tool calls per question, a timeout per tool call and per answer. On hitting a limit, the agent answers with what it has and says what is missing.
+  4. **Grounding.** Numbers come from tools, never from the model (invariant 2). A code post-check rejects an answer whose figures do not appear in the tool results, and asks the model to fix it once.
+  5. **Guardrails.**
+     - The passive principle (invariant 3): system prompt, plus an output post-check for market-timing language, plus the dedicated eval set.
+     - Financial answers end with the plan's disclaimer.
+     - General knowledge is labelled as such.
+  6. **Untrusted content.** Tool output (notes, course pages, any web text) is data, not instructions. It is delimited in the prompt, and nothing in it can trigger an action.
+  7. **No silent writes.** The agent has no write tools. Anything that would change data becomes a draft the user approves (invariant 1).
+  8. **Memory.** One conversation per thread, persisted with a LangGraph SQLite checkpointer. Older turns are trimmed or summarised to fit the model's context window.
+  9. **Observability.** Every step (model call, tool, arguments, result size, latency, tokens) is logged locally per thread and viewable from the Chat page. No cloud tracing.
+  10. **Streaming.** Tokens and "calling `query_ledger`…" progress events are streamed to the UI.
+  11. **Tests and evals.**
+      - Unit tests with a fake chat model that emits scripted tool calls.
+      - An agent eval set scored on the trajectory (the right tools with the right arguments) and on the answer (faithful to tool results, cited, passive).
+      - The eval runs before any prompt, tool or model change.
+  12. **Web search** is an open point (ADR 0021): it is outside invariant 4's network list and needs the user's decision.
 
 - **Guardrails:** no market-timing advice; financial answers end with the plan's disclaimer; questions outside the data and the knowledge base are answered as general knowledge, labelled as such.
 
@@ -419,7 +450,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 - Local Telegram poller (`getUpdates`) + `inbound_messages`; Telegram sender (ADR 0019)
 
-- LangGraph parsing graph with few-shot retrieval (bge-m3 + sqlite-vec index of past transactions) and validation retry
+- LangGraph parsing graph with few-shot retrieval (bge-m3 + sqlite-vec index of past transactions) and validation retry; date words resolved in code (ADR 0021)
 
 - Inbox page; draft edit and versions
 
@@ -515,6 +546,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 | 0018 | Local backups are plain copies                                                | Encrypt every copy                         | No gain on the same disk; key-loss risk                               |
 | 0019 | v0.2 reads Telegram from the PC; AWS relay later; S3 backups dropped          | Relay in v0.2                              | Prove it locally first; no cloud spend without the user's OK          |
 | 0020 | Parsing model `gpt-oss:20b`, no head-to-head with `qwen3:8b` | Pulling `qwen3:8b` to compare | Already installed and scores well; downloads are the user's call |
+| 0021 | Parser stays a workflow, dates computed in code; chat and plan agent are ReAct agents | ReAct parser with a date tool | Fixed steps need no agent; open-ended questions do |
 
 ## 14. Risks and open points
 
@@ -545,6 +577,8 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 - When to build the AWS relay; until then Lodestar must run at least once every 24 h.
 
 - Exact format of Intesa and Fineco XLSX exports (sample files needed in v0.4).
+
+- Web search for the chat (ADR 0021): a new outbound destination outside invariant 4; for example, an opt-in self-hosted SearXNG with queries stripped of personal data. Decide before v0.6.
 
 - Whether the 7 sheets contain rows in “LOG EU” or “DA COPIARE” missing from the main log (checked by the importer in v0.1).
 

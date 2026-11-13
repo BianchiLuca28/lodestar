@@ -32,6 +32,8 @@ Dependencies point inward: `api`, `jobs`, `ai` and `adapters` may import `domain
 - Output schemas are Pydantic models in `ai/schemas.py`. Validate in code after every LLM call; on failure retry once with the validation errors, then return a draft flagged for review.
 - The model for each task comes from `settings.yaml` (`models.parse`, `models.chat`, `models.vision`, `models.embed`). Never hard-code a model name.
 - Tools given to agents are read-only and parameterised (`query_ledger(filters)`, never raw SQL).
+- Workflow or agent (ADR 0021): a fixed sequence of steps is a plain LangGraph workflow (the parser); only open-ended questions get a ReAct agent (plan agent, chat), built to the guidelines in design §6.4.
+- Dates, amounts and any arithmetic are computed in code: the LLM copies the user's words (e.g. `date_text`), `domain/` turns them into values.
 - Unit tests use a fake chat model with scripted outputs. Real-model checks belong in `evals/`, run with `make eval`.
 
 ## Testing

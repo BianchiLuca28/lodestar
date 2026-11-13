@@ -26,7 +26,7 @@ def update(update_id: int, text: str) -> dict[str, Any]:
 
 def answer(**kw: Any) -> str:
     line = {
-        "date": "2026-03-14",
+        "date_text": None,
         "amount": "50.00",
         "from_account": "Banca Aurora",
         "to_account": None,

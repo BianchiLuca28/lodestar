@@ -1,6 +1,7 @@
 """One inbound message → proposed ledger lines (design §6.1).
 
-context → retrieve examples → extract → validate → (retry extract once with the errors) → finish.
+context → retrieve examples → extract → resolve dates → validate → (retry once) → finish.
+The LLM copies the date words; code turns them into a date (domain/dates.py).
 The LLM only extracts; every check is code. A second failure still yields lines, with a
 review note, so the user decides in the Inbox (drafts first, invariant 1).
 """
@@ -23,6 +24,7 @@ from lodestar.adapters.db.examples_index import Example
 from lodestar.ai.schemas import Extraction, ProposedLine
 from lodestar.config.catalog import catalog_of
 from lodestar.config.models import AppConfig
+from lodestar.domain.dates import resolve_date
 from lodestar.domain.errors import FieldError
 from lodestar.domain.ledger import Catalog, LineInput, validate_line
 
@@ -84,6 +86,7 @@ class State(TypedDict, total=False):
     today: date
     lines: list[ProposedLine]
     errors: list[str]
+    date_notes: list[str]  # unclear date words: flagged for the user, never retried
     attempts: int
 
 
@@ -122,7 +125,7 @@ def _system_prompt(ctx: ParseContext, today: date, examples: Sequence[Example] =
 
 def to_line_input(line: ProposedLine) -> LineInput:
     return LineInput(
-        date=line.date,
+        date=line.date or date.min,  # always set by resolve_dates before this runs
         amount=line.amount,
         from_account=line.from_account or None,
         to_account=line.to_account or None,
@@ -140,7 +143,7 @@ def check(lines: Sequence[ProposedLine], catalog: Catalog, today: date) -> list[
         return ["no lines: the message must produce at least one line"]
     errors = []
     for number, line in enumerate(lines, start=1):
-        if line.date > today:
+        if line.date is not None and line.date > today:
             errors.append(f"line {number}: date {line.date} is in the future (today is {today})")
         try:
             validate_line(to_line_input(line), catalog)
@@ -186,6 +189,20 @@ def build_graph(  # type: ignore[no-untyped-def]
             }
         return {"messages": messages, "lines": lines, "errors": [], "attempts": attempts}
 
+    def resolve_dates(state: State) -> State:
+        today, notes = state["today"], []
+        lines = []
+        for number, line in enumerate(state["lines"], start=1):
+            resolved = resolve_date(line.date_text, today)
+            if resolved is None:  # do not guess: today as a placeholder, and say so
+                notes.append(
+                    f'line {number}: could not read the date "{line.date_text}";'
+                    f" set to {today}, check it"
+                )
+                resolved = today
+            lines.append(line.model_copy(update={"date": resolved}))
+        return {"lines": lines, "date_notes": notes}
+
     def validate(state: State) -> State:
         if state["errors"]:
             return {}
@@ -206,11 +223,13 @@ def build_graph(  # type: ignore[no-untyped-def]
     graph = StateGraph(State)
     graph.add_node("retrieve", retrieve)
     graph.add_node("extract", extract)
+    graph.add_node("resolve_dates", resolve_dates)
     graph.add_node("validate", validate)
     graph.add_node("retry", retry)
     graph.add_edge(START, "retrieve")
     graph.add_edge("retrieve", "extract")
-    graph.add_edge("extract", "validate")
+    graph.add_edge("extract", "resolve_dates")
+    graph.add_edge("resolve_dates", "validate")
     graph.add_conditional_edges("validate", route, {"retry": "retry", END: END})
     graph.add_edge("retry", "extract")
     return graph.compile()
@@ -225,7 +244,7 @@ def parse_message(
 ) -> ParseResult:
     today = sent_at.astimezone(ZoneInfo(ctx.timezone)).date()
     final = build_graph(model, ctx, retriever).invoke({"text": message, "today": today})
-    errors: list[str] = final.get("errors", [])
+    errors: list[str] = [*final.get("errors", []), *final.get("date_notes", [])]
     return ParseResult(
         lines=[to_line_input(line) for line in final.get("lines", [])],
         review_note="\n".join(errors) if errors else None,
