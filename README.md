@@ -12,7 +12,7 @@ A lodestar is the star you navigate by. Here the star is your written financial 
 
 - **Log expenses in plain language.** Message a Telegram bot ("cena da Zi Nenè 50€, Marco me ne ha ridati 25") and get ready-made ledger lines back.
 - **You approve everything.** AI output is always a draft; one tap to accept, reject or correct.
-- **Runs on your machine.** Data, LLMs and embeddings stay local (Ollama). The cloud only relays raw messages and, from v0.2, stores encrypted backups.
+- **Runs on your machine.** Data, LLMs and embeddings stay local (Ollama). The cloud will only relay raw messages, in a later phase.
 - **Checks your plan.** Rules like "discretionary spending ≤ €700/month" or "liquidity between €1,500 and €3,500" are evaluated by code every day; a local agent explains the results and tells you when a planned purchase is due.
 - **Tracks your buckets and portfolio.** Savings split into buckets (liquidity, emergency fund, house, long term) with targets, contributions and positions.
 - **Answers questions with sources.** Chat over your ledger, your plan and your own reference material, with citations.
@@ -21,7 +21,7 @@ A lodestar is the star you navigate by. Here the star is your written financial 
 ## How it works
 
 ```
-Phone (Telegram) ──▶ AWS relay (API Gateway + Lambda + DynamoDB/S3)
+Phone (Telegram) ──▶ Telegram Bot API (v0.2) · AWS relay (later phase)
                                 │  polled by
                                 ▼
 Your PC (Docker Compose, localhost only)
@@ -43,11 +43,12 @@ Python 3.12 · FastAPI · SQLite + sqlite-vec · LangGraph · Ollama · React + 
 | --- | --- | --- |
 | v0.0 | Repo, agent context, CI, config skeleton, eval harness | CI green on an empty app |
 | v0.1 | Ledger, spreadsheet import, balance checks, export, backups | Spreadsheet retired |
-| v0.2 | AWS relay, Telegram bot, LangGraph parser, Inbox, evals | Telegram replaces manual entry |
+| v0.2 | Telegram bot (local polling), LangGraph parser, Inbox, evals | Telegram replaces manual entry |
 | v0.3 | Dashboards, portfolio, prices | Monthly review done in-app |
 | v0.4 | Bank XLSX reconciliation, receipt photos | Bank statement reconciled |
 | v0.5 | Rules engine, plan agent, digest and alerts | First monthly digest |
 | v0.6 | Knowledge base (RAG) and chat | Answers cite their sources |
+| Later | AWS relay so messages wait while the PC is off | Messages survive a week offline |
 
 ## Getting started
 

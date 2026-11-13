@@ -51,7 +51,7 @@ A transaction created on purpose to close the gap found by a balance check or a 
 ## Input
 
 **Inbound message**:
-A raw Telegram update (text, photo, document or button press) as received by the relay, before any interpretation.
+A raw Telegram update (text, photo, document or button press) as received by the local poller (v0.2) or the relay (later), before any interpretation.
 
 **Relay**:
 The cloud queue that holds inbound messages until the user's PC collects them.
