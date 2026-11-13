@@ -40,6 +40,7 @@ class DraftOut(BaseModel):
     source: DraftSource
     origin_text: str | None
     confidence: float | None
+    review_note: str | None
     created_at: dt.datetime
     decided_at: dt.datetime | None
     lines: list[DraftLineOut]
@@ -81,6 +82,7 @@ def _out(stored: StoredDraft, repo: DraftRepository) -> DraftOut:
         source=cast(DraftSource, d.source),
         origin_text=d.origin_text,
         confidence=d.confidence,
+        review_note=d.review_note,
         created_at=d.created_at,
         decided_at=d.decided_at,
         lines=[
@@ -138,7 +140,10 @@ def edit_draft(draft_id: int, data: DraftLinesIn, repo: Repo, catalog: Cat) -> D
 
 
 @router.post("/{draft_id}/approve")
-def approve_draft(draft_id: int, repo: Repo) -> DraftDetail:
+def approve_draft(draft_id: int, repo: Repo, catalog: Cat) -> DraftDetail:
+    # Parser output may be invalid (review_note); nothing invalid reaches the ledger.
+    for line in repo.get(draft_id).lines:
+        validate_line(line, catalog)
     return _detail(repo.approve(draft_id), repo)
 
 

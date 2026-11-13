@@ -116,6 +116,7 @@ class Draft(SQLModel, table=True):
     origin_text: str | None = None
     inbound_message_id: int | None = Field(default=None, foreign_key="inbound_messages.id")
     confidence: float | None = None
+    review_note: str | None = None  # why the parser could not produce valid lines
     created_at: dt.datetime  # UTC
     decided_at: dt.datetime | None = None
 
