@@ -1,9 +1,12 @@
 import json
+import sqlite3
 from datetime import date
 from pathlib import Path
 
+import pytest
 import yaml
 
+from lodestar.adapters.embeddings import HashingEmbedder
 from lodestar.ai.evals.predictor import ScriptedPredictor
 from lodestar.ai.evals.runner import DEFAULT_DATASET, run
 from lodestar.ai.evals.schema import Case, Line, load_cases
@@ -96,3 +99,20 @@ def test_private_runs_read_and_write_only_git_ignored_folders() -> None:
     ignored = (REPO_ROOT / ".gitignore").read_text("utf-8")
     assert "evals/data/private/" in ignored and "evals/results/private/" in ignored
     assert paths(private=False)[2] == REPO_ROOT / "config.example"
+
+
+def test_a_private_run_migrates_the_database_before_indexing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from lodestar.adapters.db.engine import migrate
+    from lodestar.ai.evals import runner
+
+    db = tmp_path / "lodestar.db"
+    migrate(db)
+    with sqlite3.connect(db) as conn:  # a database from before the example index existed
+        conn.execute("DROP TABLE transaction_embeddings")
+        conn.execute("UPDATE alembic_version SET version_num = '0004'")
+    conn.close()
+    monkeypatch.setattr(runner, "PRIVATE_DB", db)
+    index = runner.private_index(HashingEmbedder(), "fake")
+    assert index.sync() == 0  # the table exists again; nothing to embed
