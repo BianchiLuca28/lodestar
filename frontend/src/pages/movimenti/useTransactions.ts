@@ -24,7 +24,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as {
@@ -42,7 +42,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
-function send<T>(method: string, url: string, body?: unknown): Promise<T> {
+export function send<T>(method: string, url: string, body?: unknown): Promise<T> {
   return request<T>(url, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },

@@ -100,5 +100,27 @@
     "unknownSubcategory": "Sottocategoria non valida per questa categoria.",
     "notFound": "Movimento non trovato.",
     "linkedToBalanceCheck": "Questo movimento è la rettifica di una verifica saldo e non può essere eliminato."
+  },
+  "inbox": {
+    "loading": "Caricamento…",
+    "error": "Impossibile caricare le bozze.",
+    "empty": "Nessuna bozza da controllare.",
+    "approve": "Approva",
+    "reject": "Rifiuta",
+    "editLine": "Modifica riga",
+    "possibleDuplicate": "Possibile duplicato",
+    "duplicateOf": "Simile ai movimenti n. {{ids}}",
+    "version": "versione {{version}}",
+    "approveAll_one": "Approva tutte ({{count}})",
+    "approveAll_other": "Approva tutte ({{count}})",
+    "skipped_one": "{{count}} bozza con possibile duplicato da controllare a mano.",
+    "skipped_other": "{{count}} bozze con possibile duplicato da controllare a mano.",
+    "pendingCount_one": "{{count}} bozza in attesa",
+    "pendingCount_other": "{{count}} bozze in attesa",
+    "source": {
+      "telegram": "Telegram",
+      "receipt": "Scontrino",
+      "bank_xlsx": "Estratto conto"
+    }
   }
 }
