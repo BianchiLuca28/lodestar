@@ -1,6 +1,9 @@
 """Run the parsing eval set and save the metrics per model and prompt version.
 
 Usage: uv run python -m lodestar.ai.evals.runner [--dataset PATH] [--results DIR] [--compare]
+       [--live [--config DIR] [--model NAME]]
+
+Without --live the scripted fake answers (CI); with --live the real graph calls the LLM.
 """
 
 import argparse
@@ -16,6 +19,7 @@ from lodestar.ai.evals.schema import Case, load_cases
 REPO_ROOT = Path(__file__).resolve().parents[5]
 DEFAULT_DATASET = REPO_ROOT / "evals" / "datasets" / "parsing" / "cases.jsonl"
 DEFAULT_RESULTS = REPO_ROOT / "evals" / "results"
+DEFAULT_CONFIG = REPO_ROOT / "config.example"  # the eval cases use the fake persona
 
 
 def _slug(text: str) -> str:
@@ -67,15 +71,32 @@ def run(
     return path, _table(metrics, before)
 
 
+def _live(config_dir: Path, model: str | None) -> Predictor:
+    from lodestar.adapters.llm import chat_model
+    from lodestar.ai.evals.graph_predictor import GraphPredictor
+    from lodestar.ai.graphs.parse_message import ParseContext
+    from lodestar.config.loader import load_config
+    from lodestar.config.settings import Settings
+
+    config = load_config(config_dir)
+    name = model or config.settings.models.parse
+    base_url = Settings.from_config(config).llm_base_url
+    return GraphPredictor(chat_model(base_url, name), name, ParseContext.from_config(config))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--results", type=Path, default=DEFAULT_RESULTS)
     parser.add_argument("--compare", action="store_true", help="show before/after vs last result")
+    parser.add_argument("--live", action="store_true", help="run the real parse graph")
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--model", help="override models.parse")
     args = parser.parse_args()
     cases = load_cases(args.dataset)
-    # Until the v0.2 parser exists, the only predictor is the scripted fake.
-    predictor = ScriptedPredictor.from_cases(cases)
+    predictor: Predictor = ScriptedPredictor.from_cases(cases)
+    if args.live:
+        predictor = _live(args.config, args.model)
     path, table = run(cases, predictor, args.results, date.today(), compare=args.compare)
     print(table)
     print(f"\nSaved {path}")

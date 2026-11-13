@@ -121,6 +121,7 @@
       "telegram": "Telegram",
       "receipt": "Scontrino",
       "bank_xlsx": "Estratto conto"
-    }
+    },
+    "reviewNote": "Da controllare: il modello non è riuscito a proporre righe valide."
   }
 }

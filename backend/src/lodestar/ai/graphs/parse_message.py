@@ -80,7 +80,8 @@ class State(TypedDict, total=False):
 
 def _system_prompt(ctx: ParseContext, today: date) -> str:
     trip = (
-        f'A trip is active: set tag "{ctx.trip_tag}" on every line unless the message says otherwise.'
+        f'A trip is active: set tag "{ctx.trip_tag}" on every line'
+        " unless the message says otherwise."
         if ctx.trip_tag
         else "No trip is active: leave tag null unless the message gives one."
     )

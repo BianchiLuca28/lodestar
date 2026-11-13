@@ -31,6 +31,7 @@ function draft(id: number, lines = [line()], over: Record<string, unknown> = {})
     source: "telegram",
     origin_text: `Messaggio ${id}`,
     confidence: null,
+    review_note: null,
     created_at: "2026-03-14T19:30:00Z",
     decided_at: null,
     lines,
@@ -100,6 +101,14 @@ it("approve all skips possible duplicates", async () => {
   await waitFor(() => expect(sent(api, "POST", "/api/drafts")).toHaveLength(1));
   expect(sent(api, "POST", "/api/drafts")[0]?.[0].pathname).toBe("/api/drafts/1/approve");
   expect(await screen.findByText(/1 bozza con possibile duplicato da controllare/)).toBeInTheDocument();
+});
+
+it("shows why a draft needs review", async () => {
+  mockApi({ "/api/drafts": [draft(3, [line()], { review_note: "line 1: unknown category 'Pizza'" })] });
+  renderPage(<InboxPage />, "/inbox");
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toContain("Da controllare");
+  expect(alert.textContent).toContain("Pizza");
 });
 
 it("shows the empty state", async () => {

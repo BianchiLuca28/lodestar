@@ -348,6 +348,8 @@ export interface components {
             origin_text: string | null;
             /** Confidence */
             confidence: number | null;
+            /** Review Note */
+            review_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -456,6 +458,8 @@ export interface components {
             origin_text: string | null;
             /** Confidence */
             confidence: number | null;
+            /** Review Note */
+            review_note: string | null;
             /**
              * Created At
              * Format: date-time

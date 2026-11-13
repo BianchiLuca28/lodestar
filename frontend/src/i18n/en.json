@@ -121,6 +121,7 @@
       "telegram": "Telegram",
       "receipt": "Receipt",
       "bank_xlsx": "Bank statement"
-    }
+    },
+    "reviewNote": "Needs review: the model could not propose valid lines."
   }
 }
