@@ -8,14 +8,18 @@ from lodestar.domain.errors import Conflict
 from lodestar.domain.ledger import LineInput
 
 
-def line(d: date, amount: str, src: str | None = "Banca Aurora", dst: str | None = None) -> LineInput:
+def line(
+    d: date, amount: str, src: str | None = "Banca Aurora", dst: str | None = None
+) -> LineInput:
     return LineInput(d, Decimal(amount), src, dst, "🥦 Spesa", None, None, None, False)
 
 
 DAY = date(2026, 3, 14)
 
 
-def existing(id_: int, d: date, amount: str, src: str | None = "Banca Aurora", dst: str | None = None) -> Existing:
+def existing(
+    id_: int, d: date, amount: str, src: str | None = "Banca Aurora", dst: str | None = None
+) -> Existing:
     return Existing(id_, d, Decimal(amount), src, dst)
 
 
@@ -35,7 +39,9 @@ def test_different_amount_or_account_is_not_a_duplicate() -> None:
 
 def test_shared_destination_account_matches() -> None:
     candidates = [existing(3, DAY, "100.00", src="Contanti", dst="Broker Orsa")]
-    assert possible_duplicates(line(DAY, "100.00", "Banca Aurora", "Broker Orsa"), candidates) == [3]
+    assert possible_duplicates(line(DAY, "100.00", "Banca Aurora", "Broker Orsa"), candidates) == [
+        3
+    ]
 
 
 def test_only_pending_drafts_can_change() -> None:

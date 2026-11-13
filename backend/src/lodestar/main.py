@@ -9,7 +9,7 @@ from fastapi import FastAPI
 
 from lodestar.adapters.backup_folder import backup_folder, backup_if_due
 from lodestar.adapters.db.engine import db_path, make_engine, migrate
-from lodestar.api import balances, config, errors, health, transactions
+from lodestar.api import balances, config, drafts, errors, health, transactions
 from lodestar.config.loader import load_config
 from lodestar.config.models import AppConfig
 from lodestar.config.settings import Settings
@@ -52,5 +52,6 @@ def create_app(app_config: AppConfig | None = None, settings: Settings | None = 
     app.include_router(config.router)
     app.include_router(transactions.router)
     app.include_router(balances.router)
+    app.include_router(drafts.router)
     errors.install(app)
     return app
