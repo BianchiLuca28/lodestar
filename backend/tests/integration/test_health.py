@@ -7,6 +7,8 @@ import respx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from lodestar.adapters.embeddings import HashingEmbedder
+
 TEST_LLM_URL = "http://llm.test:11434"  # matches the settings fixture in conftest.py
 
 MODELS_URL = f"{TEST_LLM_URL}/v1/models"
@@ -28,7 +30,7 @@ def test_health_reports_ok_version_llm_and_database(client: TestClient) -> None:
         "status": "ok",
         "version": version("lodestar"),
         "llm": {"reachable": True, "base_url": TEST_LLM_URL},
-        "database": {"reachable": True, "revision": "0004"},
+        "database": {"reachable": True, "revision": "0005"},
         "backup": {"enabled": True, "last_backup": None, "folder": "backups"},
         "telegram": {"enabled": False, "last_poll": None, "gap_warning": False},
     }
@@ -75,7 +77,11 @@ def test_health_warns_when_the_last_telegram_poll_is_over_a_day_old(
     from lodestar.main import create_app
 
     respx.get(MODELS_URL).mock(return_value=httpx.Response(200, json={"data": []}))
-    app = create_app(example_config, replace(settings, telegram_bot_token="t", telegram_user_id=42))
+    app = create_app(
+        example_config,
+        replace(settings, telegram_bot_token="t", telegram_user_id=42),
+        HashingEmbedder(),
+    )
     old = datetime.now(UTC) - timedelta(hours=30)
     InboundRepository(app.state.engine).set_last_poll_at(old)
 

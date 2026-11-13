@@ -101,3 +101,30 @@ def test_prompt_gives_the_send_date_in_rome_with_its_weekday_and_the_catalog() -
     assert "2026-03-15 (Sunday)" in system
     assert "Banca Aurora" in system
     assert "🍝 Ristoranti" in system and "Pizzeria" in system
+
+
+def test_retrieved_examples_are_in_the_prompt() -> None:
+    from lodestar.adapters.db.examples_index import Example
+
+    seen: list[str] = []
+
+    def retriever(text: str) -> list[Example]:
+        seen.append(text)
+        return [Example("Zi Nenè", "🍝 Ristoranti", "Pizzeria", "Banca Aurora", None)] * 7
+
+    fake = model({"lines": [line()]})
+    parse_message(fake, context(), "zi nene 30", SENT, retriever)
+    system = str(fake.prompts[0][0].content)
+    assert seen == ["zi nene 30"]
+    assert '"Zi Nenè" → category "🍝 Ristoranti", subcategory "Pizzeria"' in system
+    assert system.count('"Zi Nenè" →') == 5
+
+
+def test_a_failing_retriever_parses_without_examples() -> None:
+    def broken(text: str) -> list[Any]:
+        raise ConnectionError("embedder is off")
+
+    fake = model({"lines": [line()]})
+    result = parse_message(fake, context(), "pizza 50", SENT, broken)
+    assert result.review_note is None
+    assert "No past examples" in str(fake.prompts[0][0].content)

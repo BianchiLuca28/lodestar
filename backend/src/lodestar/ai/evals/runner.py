@@ -8,6 +8,7 @@ Without --live the scripted fake answers (CI); with --live the real graph calls 
 
 import argparse
 import json
+import tempfile
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
@@ -71,9 +72,10 @@ def run(
     return path, _table(metrics, before)
 
 
-def _live(config_dir: Path, model: str | None) -> Predictor:
+def _live(config_dir: Path, model: str | None, examples: bool, work_dir: Path) -> Predictor:
+    from lodestar.adapters.embeddings import OpenAICompatEmbedder
     from lodestar.adapters.llm import chat_model
-    from lodestar.ai.evals.graph_predictor import GraphPredictor
+    from lodestar.ai.evals.graph_predictor import GraphPredictor, fake_ledger_index
     from lodestar.ai.graphs.parse_message import ParseContext
     from lodestar.config.loader import load_config
     from lodestar.config.settings import Settings
@@ -81,7 +83,13 @@ def _live(config_dir: Path, model: str | None) -> Predictor:
     config = load_config(config_dir)
     name = model or config.settings.models.parse
     base_url = Settings.from_config(config).llm_base_url
-    return GraphPredictor(chat_model(base_url, name), name, ParseContext.from_config(config))
+    retriever = None
+    if examples:
+        embed = config.settings.models.embed
+        embedder = OpenAICompatEmbedder(base_url, embed)
+        retriever = fake_ledger_index(config_dir, work_dir, embedder, embed).nearest
+    ctx = ParseContext.from_config(config)
+    return GraphPredictor(chat_model(base_url, name), name, ctx, retriever)
 
 
 def main() -> None:
@@ -92,12 +100,16 @@ def main() -> None:
     parser.add_argument("--live", action="store_true", help="run the real parse graph")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--model", help="override models.parse")
+    parser.add_argument(
+        "--no-examples", action="store_true", help="parse without few-shot retrieval"
+    )
     args = parser.parse_args()
     cases = load_cases(args.dataset)
     predictor: Predictor = ScriptedPredictor.from_cases(cases)
-    if args.live:
-        predictor = _live(args.config, args.model)
-    path, table = run(cases, predictor, args.results, date.today(), compare=args.compare)
+    with tempfile.TemporaryDirectory() as work_dir:
+        if args.live:
+            predictor = _live(args.config, args.model, not args.no_examples, Path(work_dir))
+        path, table = run(cases, predictor, args.results, date.today(), compare=args.compare)
     print(table)
     print(f"\nSaved {path}")
 

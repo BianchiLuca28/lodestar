@@ -10,6 +10,7 @@ from lodestar.adapters.db.drafts_repo import DraftRepository, StoredDraft
 from lodestar.api.transactions import ERRORS, Cat, TransactionIn
 from lodestar.domain.drafts import possible_duplicates
 from lodestar.domain.ledger import Catalog, LineInput, validate_line
+from lodestar.jobs.parse_inbound import safe_sync
 
 router = APIRouter(prefix="/api/drafts", tags=["drafts"], responses=ERRORS)
 
@@ -140,11 +141,13 @@ def edit_draft(draft_id: int, data: DraftLinesIn, repo: Repo, catalog: Cat) -> D
 
 
 @router.post("/{draft_id}/approve")
-def approve_draft(draft_id: int, repo: Repo, catalog: Cat) -> DraftDetail:
+def approve_draft(draft_id: int, request: Request, repo: Repo, catalog: Cat) -> DraftDetail:
     # Parser output may be invalid (review_note); nothing invalid reaches the ledger.
     for line in repo.get(draft_id).lines:
         validate_line(line, catalog)
-    return _detail(repo.approve(draft_id), repo)
+    approved = _detail(repo.approve(draft_id), repo)
+    safe_sync(request.app.state.examples)  # the parser learns from what the user approved
+    return approved
 
 
 @router.post("/{draft_id}/reject")

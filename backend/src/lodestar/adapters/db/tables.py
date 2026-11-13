@@ -161,3 +161,14 @@ class AppState(SQLModel, table=True):
 
     key: str = Field(primary_key=True)
     value: str
+
+
+class TransactionEmbedding(SQLModel, table=True):
+    """One past transaction in the few-shot example index; rebuilt from `transactions` at will."""
+
+    __tablename__: ClassVar[str] = "transaction_embeddings"
+
+    transaction_id: int = Field(foreign_key="transactions.id", primary_key=True, ondelete="CASCADE")
+    model: str
+    text: str
+    embedding: bytes
