@@ -114,7 +114,7 @@ class Draft(SQLModel, table=True):
     version: int = 1
     source: str
     origin_text: str | None = None
-    inbound_message_id: int | None = None  # foreign key added with inbound_messages (#46)
+    inbound_message_id: int | None = Field(default=None, foreign_key="inbound_messages.id")
     confidence: float | None = None
     created_at: dt.datetime  # UTC
     decided_at: dt.datetime | None = None
@@ -130,3 +130,33 @@ class DraftVersion(SQLModel, table=True):
     lines: str  # JSON list of lines; amounts as strings, exact
     author: str
     created_at: dt.datetime
+
+
+class InboundMessage(SQLModel, table=True):
+    """A raw Telegram update from the user, before any interpretation (CONTEXT: Inbound message)."""
+
+    __tablename__: ClassVar[str] = "inbound_messages"
+    __table_args__ = (
+        CheckConstraint(_in("kind", ("text", "photo", "document", "callback")), name="known_kind"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    telegram_update_id: int = Field(unique=True)
+    kind: str
+    chat_id: int
+    message_id: int | None = None
+    text: str | None = None
+    file_id: str | None = None
+    sent_at: dt.datetime  # UTC, when the user sent it: relative dates resolve against this
+    received_at: dt.datetime  # UTC
+    processed_at: dt.datetime | None = Field(default=None, index=True)
+    raw: str  # the update as JSON
+
+
+class AppState(SQLModel, table=True):
+    """Small key-value facts the app remembers between runs (e.g. the last Telegram poll)."""
+
+    __tablename__: ClassVar[str] = "app_state"
+
+    key: str = Field(primary_key=True)
+    value: str
