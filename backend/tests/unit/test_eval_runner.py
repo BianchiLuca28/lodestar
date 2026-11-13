@@ -13,7 +13,7 @@ CONFIG_DIR = Path(__file__).parents[3] / "config.example"
 
 def test_dataset_parses_and_uses_the_fake_persona() -> None:
     cases = load_cases(DEFAULT_DATASET)
-    assert 10 <= len(cases) <= 20
+    assert 25 <= len(cases) <= 40
     assert len({c.id for c in cases}) == len(cases)
     accounts = {
         a["name"]
