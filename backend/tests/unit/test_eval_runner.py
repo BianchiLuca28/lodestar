@@ -116,3 +116,18 @@ def test_a_private_run_migrates_the_database_before_indexing(
     monkeypatch.setattr(runner, "PRIVATE_DB", db)
     index = runner.private_index(HashingEmbedder(), "fake")
     assert index.sync() == 0  # the table exists again; nothing to embed
+
+
+def test_a_run_can_write_the_misses_report(tmp_path: Path) -> None:
+    cases = load_cases(DEFAULT_DATASET)
+    report = tmp_path / "private" / "misses.md"
+    run(cases, ScriptedPredictor({}), tmp_path, today=date(2026, 11, 1), misses=report)
+    text = report.read_text("utf-8")
+    assert f"{len(cases)} of {len(cases)} cases" in text
+
+
+def test_private_runs_put_the_report_next_to_their_results() -> None:
+    from lodestar.ai.evals.runner import PRIVATE_RESULTS, misses_path
+
+    assert misses_path(private=True) == PRIVATE_RESULTS / "misses.md"
+    assert misses_path(private=False) is None

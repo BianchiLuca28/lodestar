@@ -1,6 +1,7 @@
 import re
 import sqlite3
 from collections import Counter
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -78,3 +79,32 @@ def test_about_a_third_of_cases_are_sent_later_and_must_say_the_date(tmp_path: P
         if c.sent_at.date() == c.expected[0].date
     ]
     assert all("give no date" in p for p in on_time)
+
+
+def test_a_tagged_row_asks_the_message_to_mention_the_trip(tmp_path: Path) -> None:
+    from lodestar.ai.evals.gen_private import Row, _prompt
+
+    config = load_config(EXAMPLE)
+    row = Row(
+        1,
+        date(2026, 6, 14),
+        1200,
+        "Carta Nebbia",
+        None,
+        "🧳 Vacanze",
+        "Attività",
+        "Museo",
+        "vacanza-lisbona-2026",
+    )
+    prompt = _prompt(row, config, "It was sent the same day: give no date.")
+    assert "vacanza-lisbona-2026" in prompt and "mention the trip" in prompt
+    untagged = _prompt(row.__class__(**{**row.__dict__, "tag": None}), config, "same day")
+    assert "mention the trip" not in untagged
+
+
+def test_tagged_cases_carry_their_trip(tmp_path: Path) -> None:
+    db = fake_ledger_db(EXAMPLE, tmp_path)
+    cases = generate(fake(300), load_config(EXAMPLE), db, 300, seed=0)
+    tagged = [c for c in cases if c.expected[0].tag]
+    assert tagged and all(c.trip == c.expected[0].tag for c in tagged)
+    assert all(c.trip is None for c in cases if not c.expected[0].tag)

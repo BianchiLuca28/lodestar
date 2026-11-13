@@ -19,6 +19,8 @@ One JSON object per line:
                "category": "🍝 Ristoranti", "subcategory": "Caffè", "note": "Caffè"}]}
 ```
 
+Optional fields: `trip` (the trip tag; the case runs with trip mode on, as the app does during a trip) and `source_id` (private cases: the real row it came from, left out of its few-shot examples).
+
 `expected` lists the ledger lines in order (`date, amount, from_account, to_account, category, subcategory, note, tag`). Amounts are strings compared as `Decimal`. Relative dates ("ieri", "sabato") resolve against `sent_at`.
 
 ## Your private cases
@@ -27,6 +29,7 @@ One JSON object per line:
 2. Read every line. Fix the `message` so it sounds like you, fix `expected` if the row itself was odd, and delete cases you do not want.
 3. Save the result as `data/private/cases.jsonl`.
 4. `make eval ARGS="--live --private"` runs them; results go to `results/private/`. Each case leaves its own row out of its few-shot examples.
+5. Each private run also writes `results/private/misses.md`: every wrong case with the examples the model saw. Its top summary (expected → predicted category, names only) is safe to share; the cases below it are not.
 
 ## Running
 

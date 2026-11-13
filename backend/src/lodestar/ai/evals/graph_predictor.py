@@ -1,5 +1,6 @@
 """The real parser behind the eval runner (`make eval ARGS=--live`)."""
 
+from dataclasses import replace
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
@@ -31,6 +32,7 @@ class GraphPredictor:
         self._model = model
         self._ctx = ctx
         self._index = index
+        self.examples: dict[str, list[Example]] = {}  # per case id, for the misses report
         self.model = model_name
         self.prompt_version = f"parse-v{PROMPT_VERSION}"
 
@@ -42,9 +44,12 @@ class GraphPredictor:
             exclude = {case.source_id} if case.source_id is not None else set()
 
             def retriever(text: str) -> list[Example]:
-                return index.nearest(text, exclude=exclude)
+                found = index.nearest(text, exclude=exclude)
+                self.examples[case.id] = found
+                return found
 
-        result = parse_message(self._model, self._ctx, case.message, case.sent_at, retriever)
+        ctx = replace(self._ctx, trip_tag=case.trip) if case.trip else self._ctx
+        result = parse_message(self._model, ctx, case.message, case.sent_at, retriever)
         return [
             Line(
                 date=line.date,

@@ -115,3 +115,52 @@ def test_nearest_can_leave_out_given_rows(ledger: FastAPI) -> None:
     index = ExampleIndex(ledger.state.db_path, HashingEmbedder(), "fake")
     index.sync()
     assert all(e.note != "Conad" for e in index.nearest("conad", k=5, exclude={3}))
+
+
+def test_the_eval_predictor_remembers_the_examples_it_gave(tmp_path: Path) -> None:
+    import json
+
+    from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+    from langchain_core.messages import AIMessage
+
+    from lodestar.ai.evals.graph_predictor import GraphPredictor
+    from lodestar.ai.evals.schema import Case
+    from lodestar.ai.graphs.parse_message import ParseContext
+    from lodestar.config.loader import load_config
+
+    config = Path(__file__).parents[3] / "config.example"
+    index = fake_ledger_index(config, tmp_path, HashingEmbedder(), "fake")
+    answer = {"lines": [{"amount": "5", "from_account": "Banca Aurora", "category": "🥦 Spesa"}]}
+    model = GenericFakeChatModel(messages=iter([AIMessage(content=json.dumps(answer))]))
+    predictor = GraphPredictor(model, "fake", ParseContext.from_config(load_config(config)), index)
+    case = Case(id="c1", message="conad 5", sent_at="2026-11-05T19:00:00+01:00", expected=[])
+    predictor.predict(case)
+    assert any(e.note == "Conad" for e in predictor.examples["c1"])
+
+
+def test_a_case_with_a_trip_is_parsed_with_trip_mode_on(tmp_path: Path) -> None:
+    from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+    from langchain_core.messages import AIMessage, BaseMessage
+
+    from lodestar.ai.evals.graph_predictor import GraphPredictor
+    from lodestar.ai.evals.schema import Case
+    from lodestar.ai.graphs.parse_message import ParseContext
+    from lodestar.config.loader import load_config
+
+    class Recording(GenericFakeChatModel):
+        prompts: list[str] = []
+
+        def invoke(self, input: Any, *args: Any, **kwargs: Any) -> Any:  # noqa: A002
+            messages: list[BaseMessage] = list(input)
+            self.prompts.append(str(messages[0].content))
+            return super().invoke(input, *args, **kwargs)
+
+    config = Path(__file__).parents[3] / "config.example"
+    answer = '{"lines": [{"amount": "5", "from_account": "Banca Aurora", "category": "🥦 Spesa"}]}'
+    model = Recording(messages=iter([AIMessage(content=answer)] * 2), prompts=[])
+    predictor = GraphPredictor(model, "fake", ParseContext.from_config(load_config(config)))
+    sent = "2026-06-14T19:00:00+02:00"
+    predictor.predict(Case(id="t", message="museo 5", sent_at=sent, trip="vacanza-x", expected=[]))
+    predictor.predict(Case(id="n", message="museo 5", sent_at=sent, expected=[]))
+    assert 'tag "vacanza-x"' in model.prompts[0]
+    assert "No trip is active" in model.prompts[1]
