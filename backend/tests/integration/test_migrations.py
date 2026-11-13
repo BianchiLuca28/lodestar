@@ -5,7 +5,16 @@ import pytest
 
 from lodestar.adapters.db.engine import current_revision, downgrade_all, migrate
 
-TABLES = {"transactions", "balance_checks", "planned_expenses", "instruments", "trades"}
+TABLES = {
+    "transactions",
+    "balance_checks",
+    "planned_expenses",
+    "instruments",
+    "trades",
+    "drafts",
+    "draft_versions",
+}
+HEAD = "0002"
 
 
 def tables(db: Path) -> set[str]:
@@ -28,7 +37,7 @@ def test_upgrade_creates_tables_in_wal_mode(tmp_path: Path) -> None:
     db = tmp_path / "lodestar.db"
     migrate(db)
     assert tables(db) == TABLES
-    assert current_revision(db) == "0001"
+    assert current_revision(db) == HEAD
     with sqlite3.connect(db) as conn:
         assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
 
@@ -37,7 +46,7 @@ def test_upgrade_is_idempotent(tmp_path: Path) -> None:
     db = tmp_path / "lodestar.db"
     migrate(db)
     migrate(db)
-    assert current_revision(db) == "0001"
+    assert current_revision(db) == HEAD
 
 
 def test_valid_transaction_accepted(tmp_path: Path) -> None:

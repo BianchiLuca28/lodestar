@@ -27,7 +27,7 @@ def test_health_reports_ok_version_llm_and_database(client: TestClient) -> None:
         "status": "ok",
         "version": version("lodestar"),
         "llm": {"reachable": True, "base_url": TEST_LLM_URL},
-        "database": {"reachable": True, "revision": "0001"},
+        "database": {"reachable": True, "revision": "0002"},
         "backup": {"enabled": True, "last_backup": None, "folder": "backups"},
     }
 
