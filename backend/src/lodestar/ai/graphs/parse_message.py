@@ -1,12 +1,13 @@
 """One inbound message → proposed ledger lines (design §6.1).
 
-context → extract → validate → (retry extract once with the errors) → finish.
+context → retrieve examples → extract → validate → (retry extract once with the errors) → finish.
 The LLM only extracts; every check is code. A second failure still yields lines, with a
 review note, so the user decides in the Inbox (drafts first, invariant 1).
 """
 
 import json
-from collections.abc import Sequence
+import logging
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -18,6 +19,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
+from lodestar.adapters.db.examples_index import Example
 from lodestar.ai.schemas import Extraction, ProposedLine
 from lodestar.config.catalog import catalog_of
 from lodestar.config.models import AppConfig
@@ -26,6 +28,11 @@ from lodestar.domain.ledger import Catalog, LineInput, validate_line
 
 PROMPT_PATH = Path(__file__).parents[1] / "prompts" / "parse_message.md"
 MAX_ATTEMPTS = 2
+EXAMPLES = 5
+
+log = logging.getLogger(__name__)
+
+Retriever = Callable[[str], Sequence[Example]]
 
 
 def _prompt() -> tuple[str, str]:
@@ -71,6 +78,8 @@ class ParseResult:
 
 
 class State(TypedDict, total=False):
+    text: str
+    examples: list[Example]
     messages: list[BaseMessage]
     today: date
     lines: list[ProposedLine]
@@ -78,7 +87,19 @@ class State(TypedDict, total=False):
     attempts: int
 
 
-def _system_prompt(ctx: ParseContext, today: date) -> str:
+def _examples_block(examples: Sequence[Example]) -> str:
+    if not examples:
+        return "No past examples are available."
+    rows = [
+        f'- "{e.note}" → category "{e.category}", subcategory '
+        + (f'"{e.subcategory}"' if e.subcategory else "null")
+        + f", from {e.from_account or 'null'}, to {e.to_account or 'null'}"
+        for e in examples
+    ]
+    return "\n".join(rows)
+
+
+def _system_prompt(ctx: ParseContext, today: date, examples: Sequence[Example] = ()) -> str:
     trip = (
         f'A trip is active: set tag "{ctx.trip_tag}" on every line'
         " unless the message says otherwise."
@@ -95,6 +116,7 @@ def _system_prompt(ctx: ParseContext, today: date) -> str:
             for name, subs in ctx.categories
         ),
         trip=trip,
+        examples=_examples_block(examples),
     )
 
 
@@ -135,7 +157,19 @@ def _parse_answer(content: str) -> list[ProposedLine]:
     return Extraction.model_validate(json.loads(text[start : end + 1])).lines
 
 
-def build_graph(model: BaseChatModel, ctx: ParseContext):  # type: ignore[no-untyped-def]
+def build_graph(  # type: ignore[no-untyped-def]
+    model: BaseChatModel, ctx: ParseContext, retriever: Retriever | None = None
+):
+    def retrieve(state: State) -> State:
+        examples: list[Example] = []
+        if retriever is not None:
+            try:
+                examples = list(retriever(state["text"]))[:EXAMPLES]
+            except Exception:  # the parser still works without examples
+                log.warning("example retrieval failed; parsing without examples", exc_info=True)
+        system = SystemMessage(content=_system_prompt(ctx, state["today"], examples))
+        return {"examples": examples, "messages": [system, HumanMessage(content=state["text"])]}
+
     def extract(state: State) -> State:
         reply = model.invoke(state["messages"])
         content = str(reply.content)
@@ -170,10 +204,12 @@ def build_graph(model: BaseChatModel, ctx: ParseContext):  # type: ignore[no-unt
         return "retry"
 
     graph = StateGraph(State)
+    graph.add_node("retrieve", retrieve)
     graph.add_node("extract", extract)
     graph.add_node("validate", validate)
     graph.add_node("retry", retry)
-    graph.add_edge(START, "extract")
+    graph.add_edge(START, "retrieve")
+    graph.add_edge("retrieve", "extract")
     graph.add_edge("extract", "validate")
     graph.add_conditional_edges("validate", route, {"retry": "retry", END: END})
     graph.add_edge("retry", "extract")
@@ -181,14 +217,14 @@ def build_graph(model: BaseChatModel, ctx: ParseContext):  # type: ignore[no-unt
 
 
 def parse_message(
-    model: BaseChatModel, ctx: ParseContext, message: str, sent_at: datetime
+    model: BaseChatModel,
+    ctx: ParseContext,
+    message: str,
+    sent_at: datetime,
+    retriever: Retriever | None = None,
 ) -> ParseResult:
     today = sent_at.astimezone(ZoneInfo(ctx.timezone)).date()
-    messages: list[BaseMessage] = [
-        SystemMessage(content=_system_prompt(ctx, today)),
-        HumanMessage(content=message),
-    ]
-    final = build_graph(model, ctx).invoke({"messages": messages, "today": today})
+    final = build_graph(model, ctx, retriever).invoke({"text": message, "today": today})
     errors: list[str] = final.get("errors", [])
     return ParseResult(
         lines=[to_line_input(line) for line in final.get("lines", [])],

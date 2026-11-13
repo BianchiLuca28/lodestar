@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 
+from lodestar.adapters.embeddings import HashingEmbedder
 from lodestar.config.loader import load_config
 from lodestar.config.models import AppConfig
 from lodestar.config.settings import Settings
@@ -25,4 +26,4 @@ def settings(tmp_path: Path) -> Settings:
 
 @pytest.fixture
 def app(example_config: AppConfig, settings: Settings) -> FastAPI:
-    return create_app(example_config, settings)
+    return create_app(example_config, settings, HashingEmbedder())
