@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 from typing import Annotated, Literal
@@ -9,8 +9,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from lodestar.adapters.backup_folder import backup_folder, last_backup
 from lodestar.adapters.db.engine import current_revision
+from lodestar.adapters.db.inbound_repo import InboundRepository
 from lodestar.adapters.llm_probe import llm_reachable
 from lodestar.config.settings import Settings
+from lodestar.jobs.telegram_poll import gap_exceeded
 
 router = APIRouter(prefix="/api", tags=["health"])
 
@@ -31,12 +33,19 @@ class BackupStatus(BaseModel):
     folder: str | None  # as configured; relative paths live under the data dir
 
 
+class TelegramStatus(BaseModel):
+    enabled: bool
+    last_poll: datetime | None
+    gap_warning: bool  # over 24 h since the last poll: some messages may be lost
+
+
 class HealthResponse(BaseModel):
     status: Literal["ok"]
     version: str
     llm: LlmStatus
     database: DatabaseStatus
     backup: BackupStatus
+    telegram: TelegramStatus
 
 
 def get_settings(request: Request) -> Settings:
@@ -66,6 +75,15 @@ def _backup_status(request: Request, db: Path) -> BackupStatus:
     return BackupStatus(enabled=True, last_backup=last_backup(folder), folder=configured)
 
 
+def _telegram_status(request: Request, settings: Settings) -> TelegramStatus:
+    if not settings.telegram_enabled:
+        return TelegramStatus(enabled=False, last_poll=None, gap_warning=False)
+    last = InboundRepository(request.app.state.engine).last_poll_at()
+    return TelegramStatus(
+        enabled=True, last_poll=last, gap_warning=gap_exceeded(last, datetime.now(UTC))
+    )
+
+
 @router.get("/health")
 async def health(
     request: Request,
@@ -81,4 +99,5 @@ async def health(
         ),
         database=_database_status(db),
         backup=_backup_status(request, db),
+        telegram=_telegram_status(request, settings),
     )

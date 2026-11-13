@@ -374,7 +374,7 @@ export interface components {
         };
         /**
          * DraftLine
-         * @description A proposed line as returned to the UI (a separate schema so `TransactionIn` stays input-only).
+         * @description A proposed line in responses; its own schema keeps `TransactionIn` input-only.
          */
         DraftLine: {
             /**
@@ -504,6 +504,7 @@ export interface components {
             llm: components["schemas"]["LlmStatus"];
             database: components["schemas"]["DatabaseStatus"];
             backup: components["schemas"]["BackupStatus"];
+            telegram: components["schemas"]["TelegramStatus"];
         };
         /** LlmStatus */
         LlmStatus: {
@@ -511,6 +512,15 @@ export interface components {
             reachable: boolean;
             /** Base Url */
             base_url: string;
+        };
+        /** TelegramStatus */
+        TelegramStatus: {
+            /** Enabled */
+            enabled: boolean;
+            /** Last Poll */
+            last_poll: string | null;
+            /** Gap Warning */
+            gap_warning: boolean;
         };
         /** TransactionIn */
         TransactionIn: {
