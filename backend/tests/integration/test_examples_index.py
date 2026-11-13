@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -11,6 +12,7 @@ from lodestar.adapters.db.drafts_repo import DraftRepository
 from lodestar.adapters.db.examples_index import ExampleIndex
 from lodestar.adapters.db.transactions_repo import new_row
 from lodestar.adapters.embeddings import HashingEmbedder
+from lodestar.ai.evals.graph_predictor import fake_ledger_index
 from lodestar.domain.ledger import LineInput
 
 
@@ -100,3 +102,10 @@ def test_approval_succeeds_when_the_embedder_is_down(app: FastAPI) -> None:
     draft = drafts.create([line("Da Michele")], source="telegram", origin_text="michele 20")
     assert TestClient(app).post(f"/api/drafts/{draft.draft.id}/approve").status_code == 200
     assert TestClient(app).get("/api/transactions").json()["total"] == 1
+
+
+def test_eval_index_is_built_from_the_fake_ledger(tmp_path: Path) -> None:
+    config = Path(__file__).parents[3] / "config.example"
+    index = fake_ledger_index(config, tmp_path, HashingEmbedder(), "fake")
+    [example] = index.nearest("Conad", k=1)
+    assert example.note == "Conad" and example.category == "🥦 Spesa"
