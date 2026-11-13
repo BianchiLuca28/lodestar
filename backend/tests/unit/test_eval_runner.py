@@ -32,6 +32,8 @@ def test_dataset_parses_and_uses_the_fake_persona() -> None:
             assert ln.subcategory is None or ln.subcategory in cats[ln.category], case.id
     assert any(len(c.expected) == 2 for c in cases)  # split bill
     assert any(ln.tag for c in cases for ln in c.expected)  # trip tag
+    dated = [c for c in cases if c.expected[0].date != c.sent_at.date()]
+    assert len(dated) >= 12  # dates written in the message (ieri, giovedì, il 2 novembre...)
 
 
 def test_fake_run_writes_results_and_prints_table(tmp_path: Path) -> None:

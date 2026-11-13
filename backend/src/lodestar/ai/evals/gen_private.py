@@ -15,7 +15,7 @@ import sqlite3
 from collections import defaultdict
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -25,10 +25,13 @@ from langchain_core.messages import HumanMessage
 
 from lodestar.ai.evals.schema import Case, Line
 from lodestar.config.models import AppConfig
+from lodestar.domain.dates import MONTHS, resolve_date
 
 PROMPT_PATH = Path(__file__).parents[1] / "prompts" / "eval_message.md"
 REPO_ROOT = Path(__file__).resolve().parents[5]
-SENT_TIME = time(21, 0)  # evening of the transaction day, so "today" is the row's date
+SENT_TIME = time(21, 0)  # evening of the send day
+LATE_SHARE = 0.3  # cases "sent" 1-6 days after the transaction, whose message must say when
+WEEKDAY_WORDS = ("lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica")
 
 
 @dataclass(frozen=True)
@@ -68,7 +71,20 @@ def sample_rows(db: Path, n: int, seed: int = 0) -> list[Row]:
     return sorted(picked, key=lambda r: r.id)
 
 
-def _prompt(row: Row, config: AppConfig) -> str:
+def _date_words(day: date, sent: date, rng: random.Random) -> str:
+    """Italian words for `day` as seen from `sent`, checked against the parser's resolver."""
+    delay = (sent - day).days
+    options = [
+        WEEKDAY_WORDS[day.weekday()],
+        f"il {day.day}",
+        f"il {day.day} {MONTHS[day.month - 1]}",
+    ]
+    options += {1: ["ieri", "ieri"], 2: ["l'altro ieri"]}.get(delay, [f"{delay} giorni fa"])
+    valid = [words for words in options if resolve_date(words, sent) == day]
+    return rng.choice(valid)
+
+
+def _prompt(row: Row, config: AppConfig, when: str) -> str:
     template = PROMPT_PATH.read_text(encoding="utf-8").partition("\n")[2].strip()
     accounts = config.accounts
     default = next((a for a in accounts if a.is_default), accounts[0]).name
@@ -82,6 +98,7 @@ def _prompt(row: Row, config: AppConfig) -> str:
         category=row.category,
         subcategory=row.subcategory or "none",
         note=row.note or "none",
+        when=when,
     )
 
 
@@ -89,9 +106,19 @@ def generate(
     model: BaseChatModel, config: AppConfig, db: Path, n: int, seed: int = 0
 ) -> list[Case]:
     zone = ZoneInfo(config.settings.timezone)
+    rng = random.Random(seed + 1)
     cases = []
     for row in sample_rows(db, n, seed):
-        message = str(model.invoke([HumanMessage(content=_prompt(row, config))]).content).strip()
+        sent, when = row.date, "It was sent the same day: give no date."
+        if rng.random() < LATE_SHARE:
+            sent = row.date + timedelta(days=rng.randint(1, 6))
+            words = _date_words(row.date, sent, rng)
+            when = (
+                f"It was sent {(sent - row.date).days} day(s) later: say when it happened"
+                f' using exactly these words: "{words}".'
+            )
+        prompt = _prompt(row, config, when)
+        message = str(model.invoke([HumanMessage(content=prompt)]).content).strip()
         expected = Line(
             date=row.date,
             amount=Decimal(row.amount_cents) / 100,
@@ -106,7 +133,7 @@ def generate(
             Case(
                 id=f"real-{row.id}",
                 message=message.strip('"'),
-                sent_at=datetime.combine(row.date, SENT_TIME, zone),
+                sent_at=datetime.combine(sent, SENT_TIME, zone),
                 source_id=row.id,
                 expected=[expected],
             )

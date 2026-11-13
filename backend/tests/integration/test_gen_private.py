@@ -1,6 +1,8 @@
+import re
 import sqlite3
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
@@ -8,6 +10,7 @@ from langchain_core.messages import AIMessage
 from lodestar.ai.evals.gen_private import generate, sample_rows
 from lodestar.ai.evals.graph_predictor import fake_ledger_db
 from lodestar.config.loader import load_config
+from lodestar.domain.dates import resolve_date
 
 EXAMPLE = Path(__file__).parents[3] / "config.example"
 
@@ -42,4 +45,36 @@ def test_cases_keep_the_real_row_as_the_expected_answer(tmp_path: Path) -> None:
             ).fetchone()
             [line] = case.expected
             assert line.note == note and line.amount * 100 == cents
-            assert case.sent_at.date().isoformat() == day == line.date.isoformat()
+            assert day == line.date.isoformat()
+
+
+class Recording(GenericFakeChatModel):
+    prompts: list[str] = []
+
+    def invoke(self, input: Any, *args: Any, **kwargs: Any) -> Any:  # noqa: A002
+        self.prompts.append(str(input[0].content))
+        return super().invoke(input, *args, **kwargs)
+
+
+def test_about_a_third_of_cases_are_sent_later_and_must_say_the_date(tmp_path: Path) -> None:
+    db = fake_ledger_db(EXAMPLE, tmp_path)
+    model = Recording(messages=iter(AIMessage(content=f"msg {i}") for i in range(40)), prompts=[])
+    cases = generate(model, load_config(EXAMPLE), db, 40, seed=4)
+    late = [
+        (c, p)
+        for c, p in zip(cases, model.prompts, strict=True)
+        if c.sent_at.date() != c.expected[0].date
+    ]
+    assert 6 <= len(late) <= 20
+    for case, prompt in late:
+        delay = (case.sent_at.date() - case.expected[0].date).days
+        assert 1 <= delay <= 6
+        words = re.search(r'using exactly these words: "([^"]+)"', prompt)
+        assert words is not None, prompt
+        assert resolve_date(words.group(1), case.sent_at.date()) == case.expected[0].date
+    on_time = [
+        p
+        for c, p in zip(cases, model.prompts, strict=True)
+        if c.sent_at.date() == c.expected[0].date
+    ]
+    assert all("give no date" in p for p in on_time)
