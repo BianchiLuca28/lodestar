@@ -95,3 +95,38 @@ class Trade(SQLModel, table=True):
     fees_cents: int = 0
     account: str
     transaction_id: int | None = Field(default=None, foreign_key="transactions.id")
+
+
+DRAFT_SOURCES = ("telegram", "receipt", "bank_xlsx")
+
+
+class Draft(SQLModel, table=True):
+    """Proposed lines waiting for approval; their history lives in draft_versions."""
+
+    __tablename__: ClassVar[str] = "drafts"
+    __table_args__ = (
+        CheckConstraint(_in("status", ("pending", "approved", "rejected")), name="known_status"),
+        CheckConstraint(_in("source", DRAFT_SOURCES), name="known_source"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    status: str = Field(default="pending", index=True)
+    version: int = 1
+    source: str
+    origin_text: str | None = None
+    inbound_message_id: int | None = None  # foreign key added with inbound_messages (#46)
+    confidence: float | None = None
+    created_at: dt.datetime  # UTC
+    decided_at: dt.datetime | None = None
+
+
+class DraftVersion(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "draft_versions"
+    __table_args__ = (CheckConstraint(_in("author", ("ai", "user")), name="known_author"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    draft_id: int = Field(foreign_key="drafts.id", index=True)
+    version: int
+    lines: str  # JSON list of lines; amounts as strings, exact
+    author: str
+    created_at: dt.datetime
