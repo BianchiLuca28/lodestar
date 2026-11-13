@@ -220,7 +220,7 @@ A LangGraph graph turns one inbound message into one draft:
 
 1.  **Load context:** today's date, accounts, categories with subcategories, active trip tag, default account (Intesa Sanpaolo; Contanti when the message says “contanti” or similar).
 
-2.  **Retrieve examples:** the 5 most similar past transactions (embedding search over notes and descriptions) as few-shot examples, so “Zi nenè” maps to Pizzeria. The **example index** (`transaction_embeddings`) stores one `bge-m3` vector per transaction with a note, tagged with the embedding model; search is an exact cosine scan with `sqlite-vec`, and near-identical notes with the same category are shown once. It is backfilled at startup and after each poll, and updated on approval. If the embedder is down, parsing goes on without examples.
+2.  **Retrieve examples:** the 5 most similar past transactions (embedding search over notes and descriptions) as few-shot examples, so “Zi nenè” maps to Pizzeria. The **example index** (`transaction_embeddings`) stores one `bge-m3` vector per transaction with a note, tagged with the embedding model; search is an exact cosine scan with `sqlite-vec`, and near-identical notes with the same category are shown once. It learns from corrections: approval indexes the final (edited) lines, category and accounts are read live from the ledger so later edits count at once, and a later edit of a note re-embeds it. It is backfilled at startup and after each poll. If the embedder is down, parsing goes on without examples.
 
 3.  **Extract:** structured output into a Pydantic schema `list[ProposedLine]` (date, amount, from/to account, category, subcategory, note, tag). Category must come from the configured list.
 

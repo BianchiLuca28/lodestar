@@ -16,6 +16,7 @@ from lodestar.config.models import AppConfig
 from lodestar.domain.direction import Direction, direction_of
 from lodestar.domain.ledger import Catalog, LineInput, validate_line
 from lodestar.domain.money import from_cents
+from lodestar.jobs.parse_inbound import safe_sync
 
 ERRORS: dict[int | str, dict[str, Any]] = {
     404: {"model": ErrorResponse},
@@ -155,7 +156,7 @@ def export_transactions(
 
 @router.patch("/{transaction_id}")
 def update_transaction(
-    transaction_id: int, patch: TransactionPatch, repo: Repo, catalog: Cat
+    transaction_id: int, patch: TransactionPatch, request: Request, repo: Repo, catalog: Cat
 ) -> TransactionOut:
     current = to_out(repo.get(transaction_id))
     merged = TransactionIn.model_validate(
@@ -163,7 +164,9 @@ def update_transaction(
     )
     line = _line(merged)
     validate_line(line, catalog)
-    return to_out(repo.update(transaction_id, line))
+    updated = to_out(repo.update(transaction_id, line))
+    safe_sync(request.app.state.examples)  # an edited note re-teaches the parser
+    return updated
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)

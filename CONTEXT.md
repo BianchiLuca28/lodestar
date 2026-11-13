@@ -64,7 +64,7 @@ _Avoid_: suggestion, pending transaction
 The words of a message that say when something happened ("ieri", "giovedì", "il 2 novembre"). The parser copies them verbatim; code turns them into a date relative to the message's send day.
 
 **Example index**:
-Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and updated on every approval.
+Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and kept in step with every approval and every later edit, so corrections become the parser's habits.
 _Avoid_: memory, training data
 
 **Possible duplicate** (_Possibile duplicato_):
