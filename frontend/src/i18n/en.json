@@ -100,5 +100,27 @@
     "unknownSubcategory": "Subcategory not valid for this category.",
     "notFound": "Transaction not found.",
     "linkedToBalanceCheck": "This transaction is a balance check's adjustment and cannot be deleted."
+  },
+  "inbox": {
+    "loading": "Loading…",
+    "error": "Could not load drafts.",
+    "empty": "No drafts to review.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "editLine": "Edit line",
+    "possibleDuplicate": "Possible duplicate",
+    "duplicateOf": "Similar to transactions no. {{ids}}",
+    "version": "version {{version}}",
+    "approveAll_one": "Approve all ({{count}})",
+    "approveAll_other": "Approve all ({{count}})",
+    "skipped_one": "{{count}} draft with a possible duplicate to check by hand.",
+    "skipped_other": "{{count}} drafts with a possible duplicate to check by hand.",
+    "pendingCount_one": "{{count}} pending draft",
+    "pendingCount_other": "{{count}} pending drafts",
+    "source": {
+      "telegram": "Telegram",
+      "receipt": "Receipt",
+      "bank_xlsx": "Bank statement"
+    }
   }
 }
