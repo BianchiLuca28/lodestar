@@ -8,13 +8,17 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 
 from lodestar.adapters.backup_folder import backup_folder, backup_if_due
+from lodestar.adapters.db.drafts_repo import DraftRepository
 from lodestar.adapters.db.engine import db_path, make_engine, migrate
 from lodestar.adapters.db.inbound_repo import InboundRepository
+from lodestar.adapters.llm import chat_model
 from lodestar.adapters.telegram import HttpTelegramClient
+from lodestar.ai.graphs.parse_message import ParseContext
 from lodestar.api import balances, config, drafts, errors, health, transactions
 from lodestar.config.loader import load_config
 from lodestar.config.models import AppConfig
 from lodestar.config.settings import Settings
+from lodestar.jobs.parse_inbound import parse_pending
 from lodestar.jobs.telegram_poll import safe_poll
 
 
@@ -45,8 +49,19 @@ def create_app(app_config: AppConfig | None = None, settings: Settings | None = 
             client = HttpTelegramClient(settings.telegram_bot_token)
             inbound = InboundRepository(app.state.engine)
             user_id = settings.telegram_user_id
+            parser = chat_model(settings.llm_base_url, app_config.settings.models.parse)
+            ctx = ParseContext.from_config(app_config)
+            drafts = DraftRepository(app.state.engine)
+
+            def poll_and_parse(
+                client: HttpTelegramClient, inbound: InboundRepository, user: int
+            ) -> None:
+                # One job, so parsing never races the poll; a down LLM leaves messages pending.
+                safe_poll(client, inbound, user, datetime.now(UTC))
+                parse_pending(parser, ctx, inbound, drafts)
+
             scheduler.add_job(
-                lambda: safe_poll(client, inbound, user_id, datetime.now(UTC)),
+                lambda: poll_and_parse(client, inbound, user_id),
                 "interval",
                 seconds=30,
                 next_run_time=datetime.now(UTC),

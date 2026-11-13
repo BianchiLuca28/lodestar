@@ -79,6 +79,14 @@ class InboundRepository:
         with Session(self._engine) as session:
             return list(session.exec(query).all())
 
+    def mark_processed(self, message_id: int, when: datetime) -> None:
+        with Session(self._engine) as session:
+            row = session.get(InboundMessage, message_id)
+            if row is not None:
+                row.processed_at = when
+                session.add(row)
+                session.commit()
+
     def last_poll_at(self) -> datetime | None:
         value = self._get(LAST_POLL)
         return _utc(datetime.fromisoformat(value)) if value else None

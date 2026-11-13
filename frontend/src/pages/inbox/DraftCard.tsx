@@ -72,6 +72,12 @@ export function DraftCard({
         </span>
       </header>
 
+      {draft.review_note && (
+        <p role="alert" className="mb-3 rounded bg-amber-50 p-2 text-xs text-amber-900">
+          {t("inbox.reviewNote")} {draft.review_note}
+        </p>
+      )}
+
       <ul className="mb-3 divide-y divide-gray-100">
         {draft.lines.map((line, index) =>
           editing === index ? (

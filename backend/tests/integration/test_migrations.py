@@ -16,7 +16,7 @@ TABLES = {
     "inbound_messages",
     "app_state",
 }
-HEAD = "0003"
+HEAD = "0004"
 
 
 def tables(db: Path) -> set[str]:

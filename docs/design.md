@@ -372,7 +372,7 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Backend          | Python 3.12, FastAPI, Pydantic v2, SQLModel/SQLAlchemy 2, Alembic migrations, `uv` for packaging                                                         |
 | Database         | SQLite (WAL mode) + `sqlite-vec` for embeddings                                                                                                          |
-| AI orchestration | LangGraph + `langchain-ollama`; structured output via Pydantic schemas                                                                                   |
+| AI orchestration | LangGraph + `langchain-openai` against the OpenAI-compatible endpoint (Ollama's `/v1`); JSON output validated with Pydantic schemas                                                                                     |
 | Models           | Ollama (native on Windows, GPU), OpenAI-compatible endpoint configurable                                                                                 |
 | Scheduler        | APScheduler inside the backend (Telegram polling, prices, backups, digest)                                                                                  |
 | Frontend         | React + TypeScript, Vite, TanStack Query + TanStack Table, Tailwind + shadcn/ui, Recharts, i18next                                                       |

@@ -86,11 +86,18 @@ class DraftRepository:
         origin_text: str | None,
         author: str = "ai",
         confidence: float | None = None,
+        review_note: str | None = None,
+        inbound_message_id: int | None = None,
     ) -> StoredDraft:
         now = datetime.now(UTC)
         with Session(self._engine) as session:
             draft = Draft(
-                source=source, origin_text=origin_text, confidence=confidence, created_at=now
+                source=source,
+                origin_text=origin_text,
+                confidence=confidence,
+                review_note=review_note,
+                inbound_message_id=inbound_message_id,
+                created_at=now,
             )
             session.add(draft)
             session.flush()
@@ -120,6 +127,7 @@ class DraftRepository:
         with Session(self._engine) as session:
             draft = self._pending(session, draft_id)
             draft.version += 1
+            draft.review_note = None  # the API validated the new lines
             session.add(
                 DraftVersion(
                     draft_id=draft_id,
