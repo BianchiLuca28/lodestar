@@ -60,10 +60,8 @@ class GraphPredictor:
         ]
 
 
-def fake_ledger_index(
-    config_dir: Path, work_dir: Path, embedder: Embedder, model: str
-) -> ExampleIndex:
-    """Example index over the fake persona's ledger.csv in a throwaway DB (invariant 5)."""
+def fake_ledger_db(config_dir: Path, work_dir: Path) -> Path:
+    """A throwaway DB holding the fake persona's ledger.csv (invariant 5)."""
     config = load_config(config_dir)
     db = db_path(work_dir)
     migrate(db)
@@ -73,6 +71,13 @@ def fake_ledger_index(
         session.add_all([new_row(line, "import") for line in loaded.rows])
         session.commit()
     engine.dispose()
-    index = ExampleIndex(db, embedder, model)
+    return db
+
+
+def fake_ledger_index(
+    config_dir: Path, work_dir: Path, embedder: Embedder, model: str
+) -> ExampleIndex:
+    """Example index over the fake persona's ledger.csv in a throwaway DB (invariant 5)."""
+    index = ExampleIndex(fake_ledger_db(config_dir, work_dir), embedder, model)
     index.sync()
     return index

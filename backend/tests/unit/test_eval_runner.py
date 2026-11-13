@@ -82,3 +82,15 @@ def test_the_predictor_sees_the_case_source_row_for_leave_one_out(tmp_path: Path
     )
     run([case], Spy({}), tmp_path, today=date(2026, 11, 1))
     assert seen == [7]
+
+
+def test_private_runs_read_and_write_only_git_ignored_folders() -> None:
+    from lodestar.ai.evals.runner import REPO_ROOT, paths
+
+    dataset, results, config = paths(private=True)
+    assert dataset == REPO_ROOT / "evals" / "data" / "private" / "cases.jsonl"
+    assert results == REPO_ROOT / "evals" / "results" / "private"
+    assert config == REPO_ROOT / "config"
+    ignored = (REPO_ROOT / ".gitignore").read_text("utf-8")
+    assert "evals/data/private/" in ignored and "evals/results/private/" in ignored
+    assert paths(private=False)[2] == REPO_ROOT / "config.example"

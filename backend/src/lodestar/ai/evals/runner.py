@@ -1,7 +1,7 @@
 """Run the parsing eval set and save the metrics per model and prompt version.
 
 Usage: uv run python -m lodestar.ai.evals.runner [--dataset PATH] [--results DIR] [--compare]
-       [--live [--config DIR] [--model NAME]]
+       [--live [--private] [--config DIR] [--model NAME] [--no-examples]]
 
 Without --live the scripted fake answers (CI); with --live the real graph calls the LLM.
 """
@@ -22,6 +22,17 @@ REPO_ROOT = Path(__file__).resolve().parents[5]
 DEFAULT_DATASET = REPO_ROOT / "evals" / "datasets" / "parsing" / "cases.jsonl"
 DEFAULT_RESULTS = REPO_ROOT / "evals" / "results"
 DEFAULT_CONFIG = REPO_ROOT / "config.example"  # the eval cases use the fake persona
+PRIVATE_DATASET = REPO_ROOT / "evals" / "data" / "private" / "cases.jsonl"
+PRIVATE_RESULTS = REPO_ROOT / "evals" / "results" / "private"
+PRIVATE_CONFIG = REPO_ROOT / "config"
+PRIVATE_DB = REPO_ROOT / "data" / "lodestar.db"
+
+
+def paths(private: bool) -> tuple[Path, Path, Path]:
+    """(dataset, results dir, config dir): fake persona in git, or the user's git-ignored data."""
+    if private:
+        return PRIVATE_DATASET, PRIVATE_RESULTS, PRIVATE_CONFIG
+    return DEFAULT_DATASET, DEFAULT_RESULTS, DEFAULT_CONFIG
 
 
 def _slug(text: str) -> str:
@@ -76,7 +87,10 @@ def run(
     return path, _table(metrics, before)
 
 
-def _live(config_dir: Path, model: str | None, examples: bool, work_dir: Path) -> Predictor:
+def _live(
+    config_dir: Path, model: str | None, examples: bool, work_dir: Path, private: bool
+) -> Predictor:
+    from lodestar.adapters.db.examples_index import ExampleIndex
     from lodestar.adapters.embeddings import OpenAICompatEmbedder
     from lodestar.adapters.llm import chat_model
     from lodestar.ai.evals.graph_predictor import GraphPredictor, fake_ledger_index
@@ -91,29 +105,43 @@ def _live(config_dir: Path, model: str | None, examples: bool, work_dir: Path) -
     if examples:
         embed = config.settings.models.embed
         embedder = OpenAICompatEmbedder(base_url, embed)
-        index = fake_ledger_index(config_dir, work_dir, embedder, embed)
+        if private:  # the real ledger; each case leaves its own row out of its examples
+            index = ExampleIndex(PRIVATE_DB, embedder, embed)
+            index.sync()
+        else:
+            index = fake_ledger_index(config_dir, work_dir, embedder, embed)
     ctx = ParseContext.from_config(config)
     return GraphPredictor(chat_model(base_url, name), name, ctx, index)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
-    parser.add_argument("--results", type=Path, default=DEFAULT_RESULTS)
+    parser.add_argument("--dataset", type=Path)
+    parser.add_argument("--results", type=Path)
+    parser.add_argument(
+        "--private", action="store_true", help="your real cases (evals/data/private/)"
+    )
     parser.add_argument("--compare", action="store_true", help="show before/after vs last result")
     parser.add_argument("--live", action="store_true", help="run the real parse graph")
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--config", type=Path)
     parser.add_argument("--model", help="override models.parse")
     parser.add_argument(
         "--no-examples", action="store_true", help="parse without few-shot retrieval"
     )
     args = parser.parse_args()
-    cases = load_cases(args.dataset)
+    dataset, results, config = paths(args.private)
+    dataset, results, config = (
+        args.dataset or dataset,
+        args.results or results,
+        args.config or config,
+    )
+    cases = load_cases(dataset)
     predictor: Predictor = ScriptedPredictor.from_cases(cases)
     with tempfile.TemporaryDirectory() as work_dir:
         if args.live:
-            predictor = _live(args.config, args.model, not args.no_examples, Path(work_dir))
-        path, table = run(cases, predictor, args.results, date.today(), compare=args.compare)
+            examples = not args.no_examples
+            predictor = _live(config, args.model, examples, Path(work_dir), args.private)
+        path, table = run(cases, predictor, results, date.today(), compare=args.compare)
     print(table)
     print(f"\nSaved {path}")
 

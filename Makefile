@@ -5,7 +5,7 @@ FRONTEND := frontend
 CONFIG ?= config
 DATA ?= data
 
-.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval migrate import demo dev-demo backup restore
+.PHONY: help dev test test-backend test-frontend lint lint-backend lint-frontend gen-api fake-ledger eval eval-gen-private migrate import demo dev-demo backup restore
 
 help: ## List every target
 	@uv run --no-project python -c "import re; [print(f'  {m[1]:<14} {m[2]}') for m in re.finditer(r'^([a-z-]+):.*?## (.*)$$', open('Makefile', encoding='utf-8').read(), re.M)]"
@@ -37,6 +37,9 @@ fake-ledger: ## Regenerate config.example/ledger.csv (seeded, deterministic)
 
 eval: ## Run the parsing eval set (ARGS=--compare for before/after)
 	cd $(BACKEND) && uv run python -m lodestar.ai.evals.runner $(ARGS)
+
+eval-gen-private: ## Draft ~100 private eval cases from your real ledger (you review them)
+	cd $(BACKEND) && uv run python -m lodestar.ai.evals.gen_private $(ARGS)
 
 migrate: ## Apply database migrations to data/lodestar.db (also runs at startup)
 	cd $(BACKEND) && LODESTAR_DATA_DIR=../data uv run python -c "from pathlib import Path; from lodestar.adapters.db.engine import migrate; migrate(Path('../data/lodestar.db'))"
