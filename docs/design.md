@@ -306,7 +306,7 @@ A ReAct agent (ADR 0021, guidelines in §6.4) with read-only tools: `get_rule_st
 
 **The eval set is the backbone of every AI change.**
 
-- **Parsing evals:** ~130 Italian messages paired with the exact lines they must produce: ~30 hand-written fake cases in git (split bills, refunds, “ieri”, cash, transfers, trips) and ~100 private cases built from the real rows (`make eval-gen-private` takes a stratified sample, the LLM writes a plausible message for each row, you check every line). Private cases run with leave-one-out retrieval: a case's own row is never one of its few-shot examples.
+- **Parsing evals:** ~130 Italian messages paired with the exact lines they must produce: ~30 hand-written fake cases in git (split bills, refunds, “ieri”, cash, transfers, trips) and ~100 private cases built from the real rows (`make eval-gen-private` takes a stratified sample, the LLM writes a plausible message for each row, you check every line). Private cases run with leave-one-out retrieval: a case's own row is never one of its few-shot examples. Cases from tagged rows run with trip mode on for that tag. Each private run writes a misses report (git-ignored) whose summary of category confusions holds names only.
 
 - **Metrics:** exact match per field, line count accuracy, category accuracy, amount accuracy; plus `note_loose` (same words ignoring case and accents, or one inside the other) and `seconds_per_case`. A model comparison is won by category accuracy, with the faster model winning within 3 points (ADR 0020).
 

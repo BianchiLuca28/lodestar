@@ -99,6 +99,12 @@ def _prompt(row: Row, config: AppConfig, when: str) -> str:
         subcategory=row.subcategory or "none",
         note=row.note or "none",
         when=when,
+        trip=(
+            f'Trip: it is tagged "{row.tag}"; mention the trip naturally (the place, or'
+            ' "in vacanza") so the tag can be inferred.'
+            if row.tag
+            else ""
+        ),
     )
 
 
@@ -135,6 +141,7 @@ def generate(
                 message=message.strip('"'),
                 sent_at=datetime.combine(sent, SENT_TIME, zone),
                 source_id=row.id,
+                trip=row.tag,
                 expected=[expected],
             )
         )

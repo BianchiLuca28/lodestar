@@ -7,15 +7,15 @@
     "line_count_accuracy": 1.0,
     "field.date": 1.0,
     "field.amount": 1.0,
-    "field.from_account": 0.9767441860465116,
+    "field.from_account": 0.9534883720930233,
     "field.to_account": 1.0,
     "field.category": 0.9767441860465116,
     "field.subcategory": 0.9767441860465116,
     "field.note": 0.0,
-    "field.tag": 0.9534883720930233,
+    "field.tag": 1.0,
     "category_accuracy": 0.9767441860465116,
     "amount_accuracy": 1.0,
     "note_loose": 0.9069767441860465,
-    "seconds_per_case": 2.4487495925000076
+    "seconds_per_case": 2.3739880825
   }
 }

@@ -28,6 +28,7 @@ class Case(BaseModel):
     message: str
     sent_at: datetime
     source_id: int | None = None  # private cases: the real row they came from
+    trip: str | None = None  # trip mode on with this tag, as the app does during a trip
     expected: list[Line]
 
 
