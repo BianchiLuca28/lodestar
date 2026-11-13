@@ -109,3 +109,9 @@ def test_eval_index_is_built_from_the_fake_ledger(tmp_path: Path) -> None:
     index = fake_ledger_index(config, tmp_path, HashingEmbedder(), "fake")
     [example] = index.nearest("Conad", k=1)
     assert example.note == "Conad" and example.category == "🥦 Spesa"
+
+
+def test_nearest_can_leave_out_given_rows(ledger: FastAPI) -> None:
+    index = ExampleIndex(ledger.state.db_path, HashingEmbedder(), "fake")
+    index.sync()
+    assert all(e.note != "Conad" for e in index.nearest("conad", k=5, exclude={3}))

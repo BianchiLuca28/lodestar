@@ -1,21 +1,19 @@
 """The real parser behind the eval runner (`make eval ARGS=--live`)."""
 
-from datetime import datetime
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from sqlmodel import Session
 
 from lodestar.adapters.db.engine import db_path, make_engine, migrate
-from lodestar.adapters.db.examples_index import ExampleIndex
+from lodestar.adapters.db.examples_index import Example, ExampleIndex
 from lodestar.adapters.db.transactions_repo import new_row
 from lodestar.adapters.embeddings import Embedder
 from lodestar.adapters.loaders.csv_loader import CsvLoader
-from lodestar.ai.evals.schema import Line
+from lodestar.ai.evals.schema import Case, Line
 from lodestar.ai.graphs.parse_message import (
     PROMPT_VERSION,
     ParseContext,
-    Retriever,
     parse_message,
 )
 from lodestar.config.catalog import catalog_of
@@ -28,16 +26,25 @@ class GraphPredictor:
         model: BaseChatModel,
         model_name: str,
         ctx: ParseContext,
-        retriever: Retriever | None = None,
+        index: ExampleIndex | None = None,
     ) -> None:
         self._model = model
         self._ctx = ctx
-        self._retriever = retriever
+        self._index = index
         self.model = model_name
         self.prompt_version = f"parse-v{PROMPT_VERSION}"
 
-    def predict(self, message: str, sent_at: datetime) -> list[Line]:
-        result = parse_message(self._model, self._ctx, message, sent_at, self._retriever)
+    def predict(self, case: Case) -> list[Line]:
+        retriever = None
+        if self._index is not None:
+            index = self._index
+            # Leave-one-out: a private case's own row must not be its example.
+            exclude = {case.source_id} if case.source_id is not None else set()
+
+            def retriever(text: str) -> list[Example]:
+                return index.nearest(text, exclude=exclude)
+
+        result = parse_message(self._model, self._ctx, case.message, case.sent_at, retriever)
         return [
             Line(
                 date=line.date,

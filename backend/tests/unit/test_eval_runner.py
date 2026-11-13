@@ -6,7 +6,7 @@ import yaml
 
 from lodestar.ai.evals.predictor import ScriptedPredictor
 from lodestar.ai.evals.runner import DEFAULT_DATASET, run
-from lodestar.ai.evals.schema import load_cases
+from lodestar.ai.evals.schema import Case, Line, load_cases
 
 CONFIG_DIR = Path(__file__).parents[3] / "config.example"
 
@@ -54,3 +54,31 @@ def test_compare_shows_before_and_after(tmp_path: Path) -> None:
     )
     assert "| Metric | Before | After |" in table
     assert "| line_count_accuracy | 0.000 | 1.000 |" in table
+
+
+def test_results_include_seconds_per_case(tmp_path: Path) -> None:
+    cases = load_cases(DEFAULT_DATASET)
+    path, _ = run(cases, ScriptedPredictor.from_cases(cases), tmp_path, today=date(2026, 11, 1))
+    seconds = json.loads(path.read_text("utf-8"))["metrics"]["seconds_per_case"]
+    assert 0 <= seconds < 1
+
+
+def test_the_predictor_sees_the_case_source_row_for_leave_one_out(tmp_path: Path) -> None:
+    seen: list[int | None] = []
+
+    class Spy(ScriptedPredictor):
+        def predict(self, case: Case) -> list[Line]:
+            seen.append(case.source_id)
+            return super().predict(case)
+
+    case = Case.model_validate(
+        {
+            "id": "x",
+            "message": "m",
+            "sent_at": "2026-11-05T10:00:00+01:00",
+            "source_id": 7,
+            "expected": [],
+        }
+    )
+    run([case], Spy({}), tmp_path, today=date(2026, 11, 1))
+    assert seen == [7]

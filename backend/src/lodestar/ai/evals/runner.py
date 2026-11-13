@@ -9,6 +9,7 @@ Without --live the scripted fake answers (CI); with --live the real graph calls 
 import argparse
 import json
 import tempfile
+import time
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
@@ -55,8 +56,11 @@ def run(
     today: date,
     compare: bool = False,
 ) -> tuple[Path, str]:
-    pairs = [(c.expected, predictor.predict(c.message, c.sent_at)) for c in cases]
+    started = time.perf_counter()
+    pairs = [(c.expected, predictor.predict(c)) for c in cases]
+    elapsed = time.perf_counter() - started
     metrics = score(pairs)
+    metrics["seconds_per_case"] = elapsed / len(cases) if cases else 0.0  # addition to §6.5
     results_dir.mkdir(parents=True, exist_ok=True)
     name = f"{today.isoformat()}_{_slug(predictor.model)}_{_slug(predictor.prompt_version)}.json"
     path = results_dir / name
@@ -83,13 +87,13 @@ def _live(config_dir: Path, model: str | None, examples: bool, work_dir: Path) -
     config = load_config(config_dir)
     name = model or config.settings.models.parse
     base_url = Settings.from_config(config).llm_base_url
-    retriever = None
+    index = None
     if examples:
         embed = config.settings.models.embed
         embedder = OpenAICompatEmbedder(base_url, embed)
-        retriever = fake_ledger_index(config_dir, work_dir, embedder, embed).nearest
+        index = fake_ledger_index(config_dir, work_dir, embedder, embed)
     ctx = ParseContext.from_config(config)
-    return GraphPredictor(chat_model(base_url, name), name, ctx, retriever)
+    return GraphPredictor(chat_model(base_url, name), name, ctx, index)
 
 
 def main() -> None:

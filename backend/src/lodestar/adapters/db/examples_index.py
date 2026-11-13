@@ -5,8 +5,9 @@ runs at startup, after each poll and after every approval. Search is an exact co
 `vec_distance_cosine`, plenty for a personal ledger.
 """
 
+import json
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Collection, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -71,16 +72,21 @@ class ExampleIndex:
                 conn.commit()  # a later failure keeps what was already embedded
             return len(rows)
 
-    def nearest(self, text: str, k: int = 5) -> list[Example]:
+    def nearest(self, text: str, k: int = 5, exclude: Collection[int] = ()) -> list[Example]:
         """The k past transactions whose note is closest to `text`, one per distinct mapping."""
         [vector] = self._embedder.embed([text])
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT t.note, t.category, t.subcategory, t.from_account, t.to_account"
                 " FROM transaction_embeddings e JOIN transactions t ON t.id = e.transaction_id"
-                " WHERE e.model = ?"
+                " WHERE e.model = ? AND NOT EXISTS (SELECT 1 FROM json_each(?) WHERE value = t.id)"
                 " ORDER BY vec_distance_cosine(e.embedding, ?), t.date DESC LIMIT ?",
-                (self._model, sqlite_vec.serialize_float32(vector), k * CANDIDATES),
+                (
+                    self._model,
+                    json.dumps(sorted(exclude)),
+                    sqlite_vec.serialize_float32(vector),
+                    k * CANDIDATES,
+                ),
             ).fetchall()
         examples: list[Example] = []
         seen: set[tuple[str, ...]] = set()
