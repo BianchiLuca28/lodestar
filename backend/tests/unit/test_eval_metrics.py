@@ -53,3 +53,22 @@ def test_extra_line_counts_as_misses() -> None:
 def test_empty_input_is_rejected() -> None:
     with pytest.raises(ValueError):
         score([])
+
+
+@pytest.mark.parametrize(
+    ("expected", "predicted", "hit"),
+    [
+        ("Trattoria da Nino", "trattoria da nino", True),
+        ("Caffè", "caffe", True),
+        ("Hotel Lisbona", "Hotel a Lisbona", True),
+        ("Pizzeria La Lanterna", "La Lanterna", True),
+        ("Esselunga", "Conad", False),
+        ("Esselunga", None, False),
+    ],
+)
+def test_loose_note_ignores_case_accents_and_extra_words(
+    expected: str, predicted: str | None, hit: bool
+) -> None:
+    result = score([([line(note=expected)], [line(note=predicted)])])
+    assert result["note_loose"] == (1.0 if hit else 0.0)
+    assert result["field.note"] in (0.0, 1.0)  # exact match is kept alongside

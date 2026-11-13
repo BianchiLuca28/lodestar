@@ -208,7 +208,7 @@ Once the import is committed, the database is the only copy that matters (ADR 00
 
 | Task                              | Default model               | Notes                               |
 |-----------------------------------|-----------------------------|-------------------------------------|
-| Message parsing, plan agent, chat | `gpt-oss:20b` or `qwen3:8b` | Winner chosen by eval score in v0.2 |
+| Message parsing, plan agent, chat | `gpt-oss:20b`               | Chosen in v0.2 (ADR 0020)           |
 | Receipt photos                    | small VLM (Ovis-class), TBD | Decided in v0.4                     |
 | Embeddings                        | `bge-m3`                    | Multilingual, good on Italian       |
 
@@ -275,9 +275,9 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 **The eval set is the backbone of every AI change.**
 
-- **Parsing evals:** ~150 Italian messages paired with the exact lines they must produce. Built from the 282 real rows (the LLM writes a plausible message for a row, you check it) plus hand-written tricky cases (split bills, refunds, “ieri”, cash, trips).
+- **Parsing evals:** ~130 Italian messages paired with the exact lines they must produce: ~30 hand-written fake cases in git (split bills, refunds, “ieri”, cash, transfers, trips) and ~100 private cases built from the real rows (`make eval-gen-private` takes a stratified sample, the LLM writes a plausible message for each row, you check every line). Private cases run with leave-one-out retrieval: a case's own row is never one of its few-shot examples.
 
-- **Metrics:** exact match per field, line count accuracy, category accuracy, amount accuracy.
+- **Metrics:** exact match per field, line count accuracy, category accuracy, amount accuracy; plus `note_loose` (same words ignoring case and accents, or one inside the other) and `seconds_per_case`. A model comparison is won by category accuracy, with the faster model winning within 3 points (ADR 0020).
 
 - **RAG evals (v0.6):** ~30 questions on the course material with expected source pages; metric = retrieval hit rate and judged answer faithfulness.
 
@@ -427,7 +427,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 - Trip mode commands and auto-expiry
 
-- Parsing eval set (~150 cases); model choice gpt-oss vs qwen3 by score
+- Parsing eval set (~30 fake + ~100 private cases); parsing model `gpt-oss:20b` (ADR 0020)
 
 **Later phase (with the user's OK before any deploy)**
 
@@ -514,6 +514,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 | 0017 | The pension fund is out of scope                                              | Track the Cometa position manually         | Hard to track, outside the pillars, not actionable in the plan        |
 | 0018 | Local backups are plain copies                                                | Encrypt every copy                         | No gain on the same disk; key-loss risk                               |
 | 0019 | v0.2 reads Telegram from the PC; AWS relay later; S3 backups dropped          | Relay in v0.2                              | Prove it locally first; no cloud spend without the user's OK          |
+| 0020 | Parsing model `gpt-oss:20b`, no head-to-head with `qwen3:8b` | Pulling `qwen3:8b` to compare | Already installed and scores well; downloads are the user's call |
 
 ## 14. Risks and open points
 
@@ -534,8 +535,6 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 **Open points (decided later, not blocking v0.0–v0.2)**
 
 - VLM for receipts (Ovis-class, ≤ 8B), picked in v0.4 with its own eval set.
-
-- Parsing model: `gpt-oss:20b` vs `qwen3:8b`, picked by eval score in v0.2.
 
 - Which categories count as “discretionary” for the €700 cap: proposed in plan §6.7, to confirm and set in `categories.yaml` before v0.5.
 

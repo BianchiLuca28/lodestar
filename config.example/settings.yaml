@@ -9,8 +9,8 @@ llm:
 
 # One model per task; swap freely and compare with `make eval`.
 models:
-  parse: qwen3:8b
-  chat: qwen3:8b
+  parse: gpt-oss:20b # ADR 0020
+  chat: gpt-oss:20b
   vision: null # chosen in v0.4
   embed: bge-m3
 

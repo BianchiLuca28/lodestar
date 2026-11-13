@@ -2,18 +2,20 @@
   "date": "2026-11-13",
   "model": "gpt-oss:20b",
   "prompt_version": "parse-v2",
-  "cases": 12,
+  "cases": 30,
   "metrics": {
     "line_count_accuracy": 1.0,
-    "field.date": 0.9230769230769231,
+    "field.date": 0.9090909090909091,
     "field.amount": 1.0,
-    "field.from_account": 0.9230769230769231,
+    "field.from_account": 0.9090909090909091,
     "field.to_account": 1.0,
     "field.category": 1.0,
     "field.subcategory": 1.0,
     "field.note": 0.0,
-    "field.tag": 0.9230769230769231,
+    "field.tag": 0.9393939393939394,
     "category_accuracy": 1.0,
-    "amount_accuracy": 1.0
+    "amount_accuracy": 1.0,
+    "note_loose": 0.8787878787878788,
+    "seconds_per_case": 3.1147660166666657
   }
 }

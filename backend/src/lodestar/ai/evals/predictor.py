@@ -1,10 +1,9 @@
 """What the eval runner calls: a message in, proposed lines out.
 
-The real LangGraph parser implements `Predictor` in v0.2.
+`GraphPredictor` (graph_predictor.py) is the real parser; `ScriptedPredictor` is for CI.
 """
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import Protocol
 
 from lodestar.ai.evals.schema import Case, Line
@@ -14,7 +13,7 @@ class Predictor(Protocol):
     model: str
     prompt_version: str
 
-    def predict(self, message: str, sent_at: datetime) -> list[Line]: ...
+    def predict(self, case: Case) -> list[Line]: ...
 
 
 class ScriptedPredictor:
@@ -35,5 +34,5 @@ class ScriptedPredictor:
         """A perfect predictor: answers every case with its expected lines."""
         return cls({c.message: c.expected for c in cases})
 
-    def predict(self, message: str, sent_at: datetime) -> list[Line]:
-        return list(self._answers.get(message, []))
+    def predict(self, case: Case) -> list[Line]:
+        return list(self._answers.get(case.message, []))

@@ -27,6 +27,7 @@ class Case(BaseModel):
     id: str
     message: str
     sent_at: datetime
+    source_id: int | None = None  # private cases: the real row they came from
     expected: list[Line]
 
 
