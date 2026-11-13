@@ -1,6 +1,6 @@
 # Backend
 
-Python 3.12, managed with `uv`. FastAPI, Pydantic v2, SQLModel on SQLAlchemy 2, Alembic, SQLite (WAL) with `sqlite-vec`, LangGraph + `langchain-ollama`, APScheduler. Tests with pytest; lint with Ruff; types with mypy (strict on `domain/`).
+Python 3.12, managed with `uv`. FastAPI, Pydantic v2, SQLModel on SQLAlchemy 2, Alembic, SQLite (WAL) with `sqlite-vec`, LangGraph + `langchain-openai` (pointed at Ollama's `/v1`), APScheduler. Tests with pytest; lint with Ruff; types with mypy (strict on `domain/`).
 
 ## Layers
 

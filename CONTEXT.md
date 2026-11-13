@@ -60,6 +60,10 @@ The cloud queue that holds inbound messages until the user's PC collects them.
 One or more proposed transactions produced from an inbound message, a bank import or a receipt, waiting for the user to approve, edit or reject. Only approval turns a draft into transactions.
 _Avoid_: suggestion, pending transaction
 
+**Example index**:
+Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and updated on every approval.
+_Avoid_: memory, training data
+
 **Possible duplicate** (_Possibile duplicato_):
 A draft whose line resembles an existing transaction (same account and amount, close date) and needs an explicit decision.
 

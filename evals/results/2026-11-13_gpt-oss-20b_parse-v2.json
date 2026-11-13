@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-13",
+  "model": "gpt-oss:20b",
+  "prompt_version": "parse-v2",
+  "cases": 12,
+  "metrics": {
+    "line_count_accuracy": 1.0,
+    "field.date": 0.9230769230769231,
+    "field.amount": 1.0,
+    "field.from_account": 0.9230769230769231,
+    "field.to_account": 1.0,
+    "field.category": 1.0,
+    "field.subcategory": 1.0,
+    "field.note": 0.0,
+    "field.tag": 0.9230769230769231,
+    "category_accuracy": 1.0,
+    "amount_accuracy": 1.0
+  }
+}
