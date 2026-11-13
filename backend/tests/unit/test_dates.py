@@ -66,3 +66,24 @@ def test_unclear_or_impossible_expressions_are_not_guessed(text: str) -> None:
 
 def test_an_explicit_future_date_with_a_year_is_returned_for_validation_to_reject() -> None:
     assert resolve_date("2/12/2026", FRI) == date(2026, 12, 2)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("del 30 ottobre", date(2026, 10, 30)),
+        ("di ieri", date(2026, 11, 12)),
+        ("dell'11", date(2026, 11, 11)),
+        ("giovedì 12", date(2026, 11, 12)),
+        ("giovedì 12 novembre", date(2026, 11, 12)),
+        ("il giovedì", date(2026, 11, 12)),
+    ],
+)
+def test_leading_prepositions_and_a_redundant_weekday_are_ignored(
+    text: str, expected: date
+) -> None:
+    assert resolve_date(text, FRI) == expected
+
+
+def test_a_weekday_that_contradicts_the_date_is_not_guessed() -> None:
+    assert resolve_date("mercoledì 12", FRI) is None  # the 12th was a Thursday

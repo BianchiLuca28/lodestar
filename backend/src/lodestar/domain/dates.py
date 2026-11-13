@@ -34,6 +34,8 @@ _WEEKDAY = re.compile(rf"^({'|'.join(WEEKDAYS)})( scors[oa])?$")
 _DAY = re.compile(r"^(?:il |l')?(\d{1,2})°?$")
 _DAY_MONTH = re.compile(r"^(?:il |l')?(\d{1,2})°? ([a-z]+)(?: (\d{4}))?$")
 _NUMERIC = re.compile(r"^(\d{1,2})[/.-](\d{1,2})(?:[/.-](\d{2}|\d{4}))?$")
+_PREPOSITION = re.compile(r"^(?:il |lo |la |di |del |dello |della |al |a |per |dell'|l')")
+_WEEKDAY_AND_DATE = re.compile(rf"^({'|'.join(WEEKDAYS)}) (\d.*)$")
 
 
 def _normalise(text: str) -> str:
@@ -87,7 +89,17 @@ def resolve_date(text: str | None, today: date) -> date | None:
     """The date `text` names, seen from `today` (the send day in Europe/Rome); None if unclear."""
     if text is None or not text.strip():
         return today
-    words = _normalise(text)
+    return _resolve(_normalise(text), today)
+
+
+def _resolve(words: str, today: date) -> date | None:
+    if words not in DAY_BEFORE and (m := _PREPOSITION.match(words)):
+        return _resolve(words[m.end() :], today)  # "del 30 ottobre", "di ieri", "il giovedì"
+    if m := _WEEKDAY_AND_DATE.match(words):  # "giovedì 12": the weekday must agree
+        resolved = _resolve(m.group(2), today)
+        if resolved is None or WEEKDAYS[resolved.weekday()] != m.group(1):
+            return None
+        return resolved
     if words in TODAY:
         return today
     if words in YESTERDAY:
