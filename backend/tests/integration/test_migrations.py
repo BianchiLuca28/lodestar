@@ -13,8 +13,10 @@ TABLES = {
     "trades",
     "drafts",
     "draft_versions",
+    "inbound_messages",
+    "app_state",
 }
-HEAD = "0002"
+HEAD = "0003"
 
 
 def tables(db: Path) -> set[str]:

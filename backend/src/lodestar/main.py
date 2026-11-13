@@ -9,10 +9,13 @@ from fastapi import FastAPI
 
 from lodestar.adapters.backup_folder import backup_folder, backup_if_due
 from lodestar.adapters.db.engine import db_path, make_engine, migrate
+from lodestar.adapters.db.inbound_repo import InboundRepository
+from lodestar.adapters.telegram import HttpTelegramClient
 from lodestar.api import balances, config, drafts, errors, health, transactions
 from lodestar.config.loader import load_config
 from lodestar.config.models import AppConfig
 from lodestar.config.settings import Settings
+from lodestar.jobs.telegram_poll import safe_poll
 
 
 def create_app(app_config: AppConfig | None = None, settings: Settings | None = None) -> FastAPI:
@@ -36,6 +39,19 @@ def create_app(app_config: AppConfig | None = None, settings: Settings | None = 
                 hours=1,
                 next_run_time=datetime.now(UTC),
                 id="backup",
+            )
+        if settings.telegram_enabled:
+            assert settings.telegram_bot_token and settings.telegram_user_id is not None
+            client = HttpTelegramClient(settings.telegram_bot_token)
+            inbound = InboundRepository(app.state.engine)
+            user_id = settings.telegram_user_id
+            scheduler.add_job(
+                lambda: safe_poll(client, inbound, user_id, datetime.now(UTC)),
+                "interval",
+                seconds=30,
+                next_run_time=datetime.now(UTC),
+                max_instances=1,
+                id="telegram",
             )
         scheduler.start()
         try:

@@ -24,3 +24,15 @@ def test_config_dir_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Settings.config_dir() == Path("/somewhere/else")
     monkeypatch.delenv("LODESTAR_CONFIG_DIR")
     assert Settings.config_dir() == Path("config")
+
+
+def test_telegram_is_off_without_a_token() -> None:
+    settings = Settings.from_config(load_config(EXAMPLE), environ={})
+    assert not settings.telegram_enabled
+
+
+def test_telegram_token_and_user_come_from_env() -> None:
+    environ = {"LODESTAR_TELEGRAM_BOT_TOKEN": "123:abc", "LODESTAR_TELEGRAM_USER_ID": "42"}
+    settings = Settings.from_config(load_config(EXAMPLE), environ=environ)
+    assert settings.telegram_enabled
+    assert (settings.telegram_bot_token, settings.telegram_user_id) == ("123:abc", 42)
