@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lodestar.ai.evals.metrics import score
+from lodestar.ai.evals.misses import misses_report
 from lodestar.ai.evals.predictor import Predictor, ScriptedPredictor
 from lodestar.ai.evals.schema import Case, load_cases
 
@@ -71,9 +72,11 @@ def run(
     results_dir: Path,
     today: date,
     compare: bool = False,
+    misses: Path | None = None,
 ) -> tuple[Path, str]:
     started = time.perf_counter()
-    pairs = [(c.expected, predictor.predict(c)) for c in cases]
+    predictions = [predictor.predict(c) for c in cases]
+    pairs = [(c.expected, p) for c, p in zip(cases, predictions, strict=True)]
     elapsed = time.perf_counter() - started
     metrics = score(pairs)
     metrics["seconds_per_case"] = elapsed / len(cases) if cases else 0.0  # addition to §6.5
@@ -89,7 +92,16 @@ def run(
         "metrics": metrics,
     }
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    if misses is not None:
+        misses.parent.mkdir(parents=True, exist_ok=True)
+        report = misses_report(cases, predictions, getattr(predictor, "examples", {}))
+        misses.write_text(report, encoding="utf-8")
     return path, _table(metrics, before)
+
+
+def misses_path(private: bool) -> Path | None:
+    """Only private runs get a misses report, in their git-ignored results folder."""
+    return PRIVATE_RESULTS / "misses.md" if private else None
 
 
 def private_index(embedder: "Embedder", model: str) -> "ExampleIndex":
@@ -155,8 +167,13 @@ def main() -> None:
         if args.live:
             examples = not args.no_examples
             predictor = _live(config, args.model, examples, Path(work_dir), args.private)
-        path, table = run(cases, predictor, results, date.today(), compare=args.compare)
+        misses = misses_path(args.private)
+        path, table = run(
+            cases, predictor, results, date.today(), compare=args.compare, misses=misses
+        )
     print(table)
+    if misses is not None:
+        print(f"\nMisses report (stays on this PC): {misses}")
     print(f"\nSaved {path}")
 
 
