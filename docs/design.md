@@ -13,7 +13,7 @@
 | Original request                                                                                                               | Where it lives                                           |
 |--------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
 | Runs fully locally, LLMs included (Ollama)                                                                                     | §1, §4, §6                                               |
-| Input from the phone via Telegram; the PC downloads new messages when it starts                                                | §7 (AWS relay, because Telegram keeps updates only 24 h) |
+| Input from the phone via Telegram; the PC downloads new messages when it starts                                                | §7 (local polling in v0.2; AWS relay later, because Telegram keeps updates only 24 h) |
 | Replace the Google Sheet, including the investments and portfolio sheets                                                       | §5, F3, F11                                              |
 | Italian preferred, English acceptable where models work better; euros                                                          | §9, ADR 0012                                             |
 | Free text becomes correctly formatted lines (€50 restaurant, friend returns €25 → two lines)                                   | §6.1                                                     |
@@ -55,7 +55,7 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 
 **Principles**
 
-1.  **Local first.** Data, LLMs and embeddings run on your PC. The cloud (AWS) only relays raw messages and stores encrypted backups.
+1.  **Local first.** Data, LLMs and embeddings run on your PC. The cloud (AWS) will only relay raw messages, and only from a later phase (ADR 0019).
 
 2.  **Human approves, AI drafts.** No AI output is written to the ledger without a click on ✅.
 
@@ -82,7 +82,7 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 | F3  | Spreadsheet import           | One-time import of all 7 sheets (282 rows, trades, watchlist, planned expenses) + the 01/03/2026 adjustment; flat CSV also accepted | v0.1                      |
 | F4  | Manual entry and editing     | Add, edit, delete lines in the web app                                                                                | v0.1                      |
 | F5  | Balance check                | Enter a real account balance, see the gap, confirm an adjustment line                                                 | v0.1                      |
-| F6  | Telegram input via AWS relay | Text, photos, files sent to the bot are queued in AWS until the PC pulls them                                         | v0.2                      |
+| F6  | Telegram input               | Text, photos, files sent to the bot reach the PC; later queued in an AWS relay while the PC is off                   | v0.2 (local) · later (relay) |
 | F7  | Natural-language parsing     | “Ristorante X 50€, l’amico me ne ha ridati 25” → two draft lines in the ledger format                                 | v0.2                      |
 | F8  | Draft approval               | Drafts in the web Inbox (required) and as Telegram ✅/❌ messages, corrected by replying (optional); editable in both | v0.2                      |
 | F9  | Trip mode                    | `/viaggio Zante` tags new lines until `/fine` or auto-expiry; tag removable per draft                                 | v0.2                      |
@@ -97,7 +97,7 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 | F18 | Notifications                | Monthly digest (required) + event alerts (optional) on Telegram                                                       | v0.5                      |
 | F19 | Knowledge base (RAG)         | Coletti material (~114 pages) indexed locally, cited in answers                                                       | v0.6                      |
 | F20 | Chat                         | One chat over ledger, portfolio, rules, plan and knowledge base                                                       | v0.6                      |
-| F21 | Backups                      | Daily catch-up backup to a local folder; encrypted copy to S3                                                        | v0.1 (folder) · v0.2 (S3) |
+| F21 | Backups                      | Daily catch-up backup to a local folder; off-site copy is an open point                                              | v0.1                      |
 | F22 | Export                       | Ledger to XLSX/CSV at any time                                                                                        | v0.1                      |
 
 ## 3. Non-goals
@@ -130,11 +130,11 @@ The name: a lodestar is the star you navigate by. Here the star is the plan (fou
 
 ![Architecture: phone, AWS relay, local PC](img/architecture.png)
 
-The PC pulls from the relay; nothing on the internet can reach the PC. Price providers (yfinance, Borsa Italiana/MOT) are called by the jobs service and are the only other outbound traffic.
+The PC pulls from Telegram (v0.2) or the relay (later phase); nothing on the internet can reach the PC. Price providers (yfinance, Borsa Italiana/MOT) are called by the jobs service and are the only other outbound traffic.
 
 **Main flows**
 
-1.  **Log an expense:** phone → relay queue → poller → LangGraph parser (Ollama) → draft in SQLite → Inbox + Telegram message → you approve → ledger line.
+1.  **Log an expense:** phone → Telegram (relay queue, later phase) → poller → LangGraph parser (Ollama) → draft in SQLite → Inbox + Telegram message → you approve → ledger line.
 
 2.  **Monthly check:** scheduler → rules engine computes status → plan agent writes the digest → Telegram.
 
@@ -142,7 +142,7 @@ The PC pulls from the relay; nothing on the internet can reach the PC. Price pro
 
 4.  **Bank reconciliation:** upload XLSX in the Inbox → deterministic parse → de-duplication against the ledger → drafts for new or uncertain lines.
 
-5.  **Backup:** daily catch-up SQLite snapshot → local folder; `age` encryption → S3 (v0.2).
+5.  **Backup:** daily catch-up SQLite snapshot → local folder.
 
 ## 5. Data model
 
@@ -284,7 +284,9 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 ## 7. Telegram and the AWS relay
 
-**A tiny serverless relay stores Telegram messages until the PC is on, because Telegram keeps undelivered bot updates for 24 hours at most.** The relay never parses or reasons; it only queues raw input.
+**v0.2: local polling (ADR 0019).** While it runs, the backend long-polls Telegram `getUpdates`, accepts only your user ID, stores updates in `inbound_messages` and replies “📥 Ricevuto”. Telegram keeps undelivered updates for 24 hours, so messages sent while Lodestar is off for longer are lost; the app warns when the gap since the last poll exceeds 24 hours. The relay below replaces the poller in a later phase, behind the same interface, and is deployed only with the user's explicit OK.
+
+**Later phase: the relay.** **A tiny serverless relay stores Telegram messages until the PC is on, because Telegram keeps undelivered bot updates for 24 hours at most.** The relay never parses or reasons; it only queues raw input.
 
 **Inbound (phone → PC)**
 
@@ -304,9 +306,9 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 **Bot commands:** `/viaggio <nome>`, `/fine`, `/stato` (rule summary), `/annulla` (reject last draft), `/aiuto`.
 
-**Infrastructure as code:** AWS SAM (or Terraform) in `infra/`; one `make deploy-relay`. Expected cost ≈ €0: API Gateway, Lambda and DynamoDB requests stay far below free-tier volumes for one person.
+**Infrastructure as code:** AWS SAM in `infra/` (ADR 0019); one `make deploy-relay`, run only with the user's OK. Expected cost ≈ €0: API Gateway, Lambda and DynamoDB requests stay far below free-tier volumes for one person.
 
-**Backups (F21):** the PC may be on once a week, so there is no fixed time: at startup and then hourly, if the newest backup is over a day old, the job copies the SQLite file with the SQLite online backup API into the `folder` target (default `data/backups/`, plain SQLite copies). Retention keeps the newest backup of each of the last 30 days that have one and of the last 12 months. `make restore` puts one back, keeping the replaced database aside. Copies that leave the PC (`s3`, v0.2) are encrypted client-side with `age`, so AWS only ever sees ciphertext (ADR 0018).
+**Backups (F21):** the PC may be on once a week, so there is no fixed time: at startup and then hourly, if the newest backup is over a day old, the job copies the SQLite file with the SQLite online backup API into the `folder` target (default `data/backups/`, plain SQLite copies). Retention keeps the newest backup of each of the last 30 days that have one and of the last 12 months. `make restore` puts one back, keeping the replaced database aside. Off-site copies are an open point (ADR 0019).
 
 ## 8. UX: six pages and notifications
 
@@ -357,7 +359,7 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 
 - **Copyright:** course material is never committed; `knowledge/` holds a README explaining what to drop in.
 
-- **Privacy:** no telemetry. The only outbound traffic: Telegram API, the AWS relay, price providers, backup targets.
+- **Privacy:** no telemetry. The only outbound traffic: Telegram API, the AWS relay (later phase), price providers.
 
 - **Onboarding for others:** `cp -r config.example config`, edit YAML, `docker compose up`, open `localhost`. A setup wizard in the app is a later nice-to-have, not v1.
 
@@ -371,13 +373,13 @@ A LangGraph agent with read-only tools: `get_rule_status`, `query_ledger` (param
 | Database         | SQLite (WAL mode) + `sqlite-vec` for embeddings                                                                                                          |
 | AI orchestration | LangGraph + `langchain-ollama`; structured output via Pydantic schemas                                                                                   |
 | Models           | Ollama (native on Windows, GPU), OpenAI-compatible endpoint configurable                                                                                 |
-| Scheduler        | APScheduler inside the backend (relay polling, prices, backups, digest)                                                                                  |
+| Scheduler        | APScheduler inside the backend (Telegram polling, prices, backups, digest)                                                                                  |
 | Frontend         | React + TypeScript, Vite, TanStack Query + TanStack Table, Tailwind + shadcn/ui, Recharts, i18next                                                       |
-| Telegram         | `python-telegram-bot` (send only; receive via relay)                                                                                                     |
+| Telegram         | `python-telegram-bot` (send; receive by polling in v0.2, via the relay later)                                                                                                     |
 | Prices           | `yfinance` (ETFs), Borsa Italiana/MOT scraper (BTPs), manual entry                                                                                       |
 | Excel            | `openpyxl` (import of the sheet and bank XLSX)                                                                                                           |
-| AWS relay        | Python Lambda, API Gateway HTTP API, DynamoDB, S3; AWS SAM                                                                                               |
-| Backups          | SQLite backup API; local folder (plain) and S3 (`age`-encrypted, v0.2)                                                                                   |
+| AWS relay (later)| Python Lambda, API Gateway HTTP API, DynamoDB, S3; AWS SAM                                                                                               |
+| Backups          | SQLite backup API; local folder (plain copies)                                                                                                           |
 | Quality          | pytest, Ruff, mypy (strict on `domain/`), Vitest + ESLint for the frontend, pre-commit                                                                   |
 | CI               | GitHub Actions: lint, type-check, tests, fast eval subset with a mocked LLM                                                                              |
 | Runtime          | Docker Desktop + WSL2 on Windows; `docker compose up`, `restart: unless-stopped`; Ollama reached at `host.docker.internal:11434`; UI on `localhost` only |
@@ -414,9 +416,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 **v0.2 · AI input**
 
-- AWS relay (SAM/Terraform): ingest Lambda, queue, poll/ack endpoints, S3 for files
-
-- Poller + `inbound_messages`; Telegram sender
+- Local Telegram poller (`getUpdates`) + `inbound_messages`; Telegram sender (ADR 0019)
 
 - LangGraph parsing graph with few-shot retrieval (bge-m3 + sqlite-vec index of past transactions) and validation retry
 
@@ -428,7 +428,9 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 - Parsing eval set (~150 cases); model choice gpt-oss vs qwen3 by score
 
-- S3 encrypted backups
+**Later phase (with the user's OK before any deploy)**
+
+- AWS relay (SAM): ingest Lambda, queue, poll/ack endpoints, S3 for files; replaces the local poller
 
 **v0.3 · Dashboards and portfolio**
 
@@ -509,6 +511,8 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 | 0015 | One-time initial import from XLSX or CSV, one loader per format; file not kept | Keep the source file as an input; XLSX only | The database is the only truth; CSV opens the app to non-Sheet users  |
 | 0016 | P3 bond orders follow the plan's alternation rule, computed in code          | Ranking candidates by net yield            | The finalized plan fixes the rule; ranking would second-guess it      |
 | 0017 | The pension fund is out of scope                                              | Track the Cometa position manually         | Hard to track, outside the pillars, not actionable in the plan        |
+| 0018 | Local backups are plain copies                                                | Encrypt every copy                         | No gain on the same disk; key-loss risk                               |
+| 0019 | v0.2 reads Telegram from the PC; AWS relay later; S3 backups dropped          | Relay in v0.2                              | Prove it locally first; no cloud spend without the user's OK          |
 
 ## 14. Risks and open points
 
@@ -518,7 +522,7 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 |-----------------------------------|-------------------------------|-----------------------------------------------------------------------------------------|
 | Scope creep stalls the project    | No working app                | Phases ship independently; v0.1 + v0.2 already replace the Sheet and Form               |
 | Small models mis-parse messages   | Wrong ledger lines            | Drafts always reviewed; eval set gates prompt/model changes; few-shot from similar rows |
-| Data loss (one SQLite file)       | All history lost              | Nightly encrypted backups from v0.1; restore tested in CI with a fake DB                |
+| Data loss (one SQLite file)       | All history lost              | Catch-up local backups from v0.1; restore tested with a fake DB                         |
 | Telegram buttons add complexity   | v0.2 slips                    | Telegram approval is optional; web Inbox is the required path                           |
 | MOT/Borsa Italiana scraper breaks | Stale bond prices             | Manual price entry fallback; stale-price warning after 7 days                           |
 | Docker + GPU + Windows friction   | Slow setup                    | Ollama stays native; containers only reach it over HTTP                                 |
@@ -536,7 +540,9 @@ Each phase becomes a GitHub milestone; each item below becomes an issue.
 
 - Instrument policy file: derived from plan §6.4, §6.5 and §6.9 before v0.5.
 
-- AWS SAM vs Terraform for the relay (decide at the start of v0.2).
+- Off-site backups (e.g. `age`-encrypted S3), dropped from v0.2 by ADR 0019.
+
+- When to build the AWS relay; until then Lodestar must run at least once every 24 h.
 
 - Exact format of Intesa and Fineco XLSX exports (sample files needed in v0.4).
 

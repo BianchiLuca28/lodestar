@@ -1,6 +1,6 @@
 # Lodestar
 
-Local-first, AI-assisted personal finance tracker for one user per install. Expenses arrive in plain Italian via Telegram (through an AWS relay), local LLMs (Ollama, orchestrated with LangGraph) turn them into **drafts**, the user approves them, and a rules engine checks the ledger against the user's written financial plan. Open source, AGPL-3.0.
+Local-first, AI-assisted personal finance tracker for one user per install. Expenses arrive in plain Italian via Telegram (read by the local app; through an AWS relay in a later phase), local LLMs (Ollama, orchestrated with LangGraph) turn them into **drafts**, the user approves them, and a rules engine checks the ledger against the user's written financial plan. Open source, AGPL-3.0.
 
 ## Where knowledge lives
 
@@ -14,7 +14,7 @@ Local-first, AI-assisted personal finance tracker for one user per install. Expe
 ```
 backend/        Python 3.12 · FastAPI · SQLite · LangGraph
 frontend/       React · TypeScript · Vite
-infra/          AWS SAM: Telegram relay + backup bucket
+infra/          AWS SAM: Telegram relay (later phase)
 evals/          LLM eval datasets, runner, results history
 config.example/ Fake persona: settings, accounts, categories, buckets, rules, instrument policy, plan
 docs/           design.md, adr/
@@ -25,7 +25,7 @@ knowledge/      User's course material for RAG (git-ignored except README)
 
 ## Commands
 
-`make help` lists every target; it is the source of truth. Current targets: `make help`, `make dev`, `make test` (`test-backend`, `test-frontend`), `make lint` (`lint-backend`, `lint-frontend`), `make gen-api`, `make fake-ledger`, `make eval`, `make migrate`, `make import`, `make demo`, `make dev-demo`, `make backup`, `make restore`. Coming next: `make deploy-relay` (v0.2). Keep the Makefile and this line in sync.
+`make help` lists every target; it is the source of truth. Current targets: `make help`, `make dev`, `make test` (`test-backend`, `test-frontend`), `make lint` (`lint-backend`, `lint-frontend`), `make gen-api`, `make fake-ledger`, `make eval`, `make migrate`, `make import`, `make demo`, `make dev-demo`, `make backup`, `make restore`. Later phase: `make deploy-relay` (never run without the user's OK). Keep the Makefile and this line in sync.
 
 ## Invariants
 
