@@ -70,6 +70,15 @@ The backend needs a `config/` folder: start from the fake persona with `cp -r co
 
 **Backups:** the app copies the database into `data/backups/` at startup and hourly whenever the newest copy is over a day old (30 daily and 12 monthly kept). `make backup` makes one now; `make restore FILE=data/backups/lodestar-….db` puts one back after you stop the app, keeping the replaced database aside.
 
+**Telegram bot:** create a bot with [@BotFather](https://t.me/BotFather), get your numeric user ID (e.g. from [@userinfobot](https://t.me/userinfobot)), and add both to `.env`:
+
+```
+LODESTAR_TELEGRAM_BOT_TOKEN=123456:ABC...
+LODESTAR_TELEGRAM_USER_ID=123456789
+```
+
+While Lodestar runs it reads the bot every 30 seconds, keeps only your messages and answers "📥 Ricevuto". Telegram keeps undelivered messages for 24 hours, so keep Lodestar running at least once a day; after a longer gap the bot warns you that some messages may be lost (ADR 0019). Without a token the bot is simply off.
+
 **Try it on fake data:** `make demo` builds `data-demo/` from the fake persona in `config.example/`, then `make dev-demo` runs the stack on it. Your real `config/` and `data/` are not touched.
 
 The UI is bound to `127.0.0.1` only. The LLM endpoint comes from `config/settings.yaml`; in Docker, `LODESTAR_LLM_BASE_URL` overrides it with `http://host.docker.internal:11434` to reach Ollama on the host.
