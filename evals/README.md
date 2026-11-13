@@ -21,9 +21,17 @@ One JSON object per line:
 
 `expected` lists the ledger lines in order (`date, amount, from_account, to_account, category, subcategory, note, tag`). Amounts are strings compared as `Decimal`. Relative dates ("ieri", "sabato") resolve against `sent_at`.
 
+## Your private cases
+
+1. `make eval-gen-private` samples ~100 rows from `data/lodestar.db` (every category represented) and has the local model write the message you would have sent for each. It writes `data/private/cases.draft.jsonl`.
+2. Read every line. Fix the `message` so it sounds like you, fix `expected` if the row itself was odd, and delete cases you do not want.
+3. Save the result as `data/private/cases.jsonl`.
+4. `make eval ARGS="--live --private"` runs them; results go to `results/private/`. Each case leaves its own row out of its few-shot examples.
+
 ## Running
 
 - `make eval` runs the full set and prints a metrics table; `make eval ARGS=--compare` adds a before/after against the last saved result.
-- Metrics: line count accuracy, exact match per field, category accuracy, amount accuracy.
-- Until the v0.2 parser lands, the only predictor is the scripted fake, so scores are 1.000. Results from the fake (`*_fake_*.json`) are git-ignored; commit results from real models to keep the history.
+- `make eval ARGS="--live"` runs the real parser (`--model NAME` to try another model, `--no-examples` to switch off retrieval).
+- Metrics: line count accuracy, exact match per field, category accuracy, amount accuracy, `note_loose` (same words ignoring case and accents) and `seconds_per_case`.
+- Without `--live` the predictor is the scripted fake, so scores are 1.000. Results from the fake (`*_fake_*.json`) are git-ignored; commit results from real models to keep the history.
 - CI runs the runner with the fake predictor through `pytest` (`backend/tests/unit/test_eval_runner.py`).

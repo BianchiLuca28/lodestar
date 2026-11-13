@@ -13,6 +13,7 @@ import argparse
 import random
 import sqlite3
 from collections import defaultdict
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from decimal import Decimal
@@ -45,7 +46,7 @@ class Row:
 
 def sample_rows(db: Path, n: int, seed: int = 0) -> list[Row]:
     """n rows, at least one per category, the rest proportional to category size."""
-    with sqlite3.connect(db) as conn:
+    with closing(sqlite3.connect(db)) as conn:  # `with conn` alone never closes it
         rows = [
             Row(r[0], date.fromisoformat(r[1]), *r[2:])
             for r in conn.execute(
