@@ -108,3 +108,19 @@ def test_tagged_cases_carry_their_trip(tmp_path: Path) -> None:
     tagged = [c for c in cases if c.expected[0].tag]
     assert tagged and all(c.trip == c.expected[0].tag for c in tagged)
     assert all(c.trip is None for c in cases if not c.expected[0].tag)
+
+
+def test_an_empty_answer_is_retried(tmp_path: Path) -> None:
+    db = fake_ledger_db(EXAMPLE, tmp_path)
+    answers = ["", "  ", "pane 3"]
+    model = GenericFakeChatModel(messages=iter(AIMessage(content=a) for a in answers))
+    [case] = generate(model, load_config(EXAMPLE), db, 1, seed=0)
+    assert case.message == "pane 3"
+
+
+def test_a_row_that_stays_empty_is_skipped(tmp_path: Path) -> None:
+    db = fake_ledger_db(EXAMPLE, tmp_path)
+    answers = ["", "", "", '""', "msg b"]
+    model = GenericFakeChatModel(messages=iter(AIMessage(content=a) for a in answers))
+    cases = generate(model, load_config(EXAMPLE), db, 2, seed=0)
+    assert [c.message for c in cases] == ["msg b"]
