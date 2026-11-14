@@ -9,8 +9,8 @@ review note, so the user decides in the Inbox (drafts first, invariant 1).
 
 import json
 import logging
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import TypedDict
@@ -71,6 +71,14 @@ class ParseContext:
             timezone=config.settings.timezone,
             trip_tag=trip_tag,
         )
+
+    def with_subcategories(self, used: Mapping[str, Sequence[str]]) -> "ParseContext":
+        """Show the model the user's own subcategory names: past ones first, then config's."""
+        merged = []
+        for name, configured in self.categories:
+            past = list(used.get(name, []))
+            merged.append((name, past + [s for s in configured if s not in past]))
+        return replace(self, categories=merged)
 
 
 @dataclass(frozen=True)

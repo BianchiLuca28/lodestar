@@ -161,6 +161,13 @@ def _live(
         else:
             index = fake_ledger_index(config_dir, work_dir, embedder, embed)
     ctx = ParseContext.from_config(config)
+    if index is not None:  # the ledger the examples come from also gives the subcategory names
+        from lodestar.adapters.db.engine import make_engine
+        from lodestar.adapters.db.transactions_repo import TransactionRepository
+
+        engine = make_engine(index.db)
+        ctx = ctx.with_subcategories(TransactionRepository(engine).used_subcategories())
+        engine.dispose()
     return GraphPredictor(chat_model(base_url, name), name, ctx, index)
 
 

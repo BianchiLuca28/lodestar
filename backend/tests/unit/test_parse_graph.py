@@ -203,3 +203,14 @@ def test_the_prompt_teaches_the_words_for_money_coming_back() -> None:
     system = str(fake.prompts[0][0].content)
     for word in ('"ritorno', '"storno', '"rimborso', '"da <person>'):
         assert word in system
+
+
+def test_subcategories_used_in_the_past_are_listed_most_used_first() -> None:
+    ctx = context().with_subcategories(
+        {"❓ Varie": ["Regalini", "Multe"], "🍝 Ristoranti": ["Sushi"]}
+    )
+    fake = model({"lines": [line()]})
+    parse_message(fake, ctx, "pizza 50", SENT)
+    system = str(fake.prompts[0][0].content)
+    assert "- ❓ Varie: Regalini, Multe" in system
+    assert "- 🍝 Ristoranti: Sushi, Trattoria, Pizzeria, Aperitivo, Caffè" in system
