@@ -17,6 +17,17 @@ class Catalog:
     categories: Mapping[str, frozenset[str]]  # category → allowed subcategories (empty: any)
 
 
+FALLBACK_SUBCATEGORY = "Altro"
+
+
+def default_subcategory(category: str, subcategory: str | None, catalog: Catalog) -> str | None:
+    """The user's rule: no specific subcategory means "Altro", when the category has one."""
+    if subcategory:
+        return subcategory
+    allowed = catalog.categories.get(category, frozenset())
+    return FALLBACK_SUBCATEGORY if FALLBACK_SUBCATEGORY in allowed else None
+
+
 @dataclass(frozen=True)
 class LineInput:
     date: date
