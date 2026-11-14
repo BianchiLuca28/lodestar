@@ -230,7 +230,9 @@ A LangGraph graph turns one inbound message into one draft:
 
 6.  **Corrections:** a reply to the draft in Telegram (“no, era contanti”) or an edit in the web app produces a new draft version. Telegram replies go back through step 3 with the previous draft as context.
 
-**Subcategory rule (user's decision, 14/11/2026).** When nothing more specific fits, the subcategory is “Altro” if the category has one, otherwise empty. Code applies it after extraction, to examples shown to the model and to expected lines in the eval. Past rows with an empty subcategory can be cleaned up in Movimenti.
+**Subcategory rule (user's decision, 14/11/2026).** When nothing more specific fits, the subcategory is “Altro” if the category allows it (it lists “Altro”, or lists no subcategories at all); a category with an explicit list without “Altro” stays empty. The prompt lists, per category, the subcategories the user has used (most used first, read from the ledger at each run) followed by the configured ones, so the model picks the user's own names.
+
+**Amazon rule (user's decision, 14/11/2026).** When the catalog has an Amazon category, anything bought on Amazon goes there whatever the item; subscriptions such as Amazon Prime keep their subscription category. Code applies it after extraction, to examples shown to the model and to expected lines in the eval. Past rows with an empty subcategory can be cleaned up in Movimenti.
 
 **Incoming money.** The prompt knows the user's words: “ritorno …”, “storno …”, “rimborso …” and “da <persona>” mean money received; “reso a <persona>” means the user paid someone back.
 

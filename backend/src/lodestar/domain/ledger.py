@@ -24,8 +24,11 @@ def default_subcategory(category: str, subcategory: str | None, catalog: Catalog
     """The user's rule: no specific subcategory means "Altro", when the category has one."""
     if subcategory:
         return subcategory
-    allowed = catalog.categories.get(category, frozenset())
-    return FALLBACK_SUBCATEGORY if FALLBACK_SUBCATEGORY in allowed else None
+    if category not in catalog.categories:
+        return None
+    allowed = catalog.categories[category]
+    # An empty list allows any subcategory, so "Altro" too; an explicit list must include it.
+    return FALLBACK_SUBCATEGORY if not allowed or FALLBACK_SUBCATEGORY in allowed else None
 
 
 @dataclass(frozen=True)

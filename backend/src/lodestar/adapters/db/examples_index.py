@@ -36,6 +36,10 @@ class ExampleIndex:
         self._embedder = embedder
         self._model = model
 
+    @property
+    def db(self) -> Path:
+        return self._db
+
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
         conn = sqlite3.connect(self._db)

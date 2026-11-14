@@ -12,6 +12,7 @@ from lodestar.adapters.db.drafts_repo import DraftRepository
 from lodestar.adapters.db.engine import db_path, make_engine, migrate
 from lodestar.adapters.db.examples_index import ExampleIndex
 from lodestar.adapters.db.inbound_repo import InboundRepository
+from lodestar.adapters.db.transactions_repo import TransactionRepository
 from lodestar.adapters.embeddings import Embedder, OpenAICompatEmbedder
 from lodestar.adapters.llm import chat_model
 from lodestar.adapters.telegram import HttpTelegramClient
@@ -78,7 +79,10 @@ def create_app(
                 # One job, so parsing never races the poll; a down LLM leaves messages pending.
                 safe_poll(client, inbound, user, datetime.now(UTC))
                 safe_sync(app.state.examples)
-                parse_pending(parser, ctx, inbound, drafts, app.state.examples.nearest)
+                # The user's subcategory names as of now, so new ones are picked up at once.
+                used = TransactionRepository(app.state.engine).used_subcategories()
+                current = ctx.with_subcategories(used)
+                parse_pending(parser, current, inbound, drafts, app.state.examples.nearest)
 
             scheduler.add_job(
                 lambda: poll_and_parse(client, inbound, user_id),

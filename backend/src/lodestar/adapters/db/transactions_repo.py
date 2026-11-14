@@ -1,5 +1,6 @@
 """Transactions in SQLite."""
 
+import builtins
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -121,6 +122,22 @@ class TransactionRepository:
     def count(self) -> int:
         with Session(self._engine) as session:
             return session.exec(select(func.count()).select_from(Transaction)).one()
+
+    def used_subcategories(self) -> dict[str, builtins.list[str]]:  # `list` is a method here
+        """Per category, the subcategories the user has used, most used first."""
+        uses = func.count().label("uses")
+        query = (
+            select(Transaction.category, Transaction.subcategory, uses)
+            .where(col(Transaction.subcategory).is_not(None), Transaction.subcategory != "")
+            .group_by(col(Transaction.category), col(Transaction.subcategory))
+            .order_by(col(Transaction.category), uses.desc(), col(Transaction.subcategory))
+        )
+        used: dict[str, builtins.list[str]] = {}
+        with Session(self._engine) as session:
+            for category, subcategory, _ in session.exec(query).all():
+                if subcategory:
+                    used.setdefault(category, []).append(subcategory)
+        return used
 
     def add(self, line: LineInput, source: str) -> Transaction:
         row = new_row(line, source)

@@ -202,3 +202,18 @@ def test_notes_without_letters_are_not_examples(app: FastAPI) -> None:
     index = ExampleIndex(app.state.db_path, HashingEmbedder(), "fake")
     assert index.sync() == 1
     assert [e.note for e in index.nearest("30", k=5)] == ["Zi Nenè"]
+
+
+def test_used_subcategories_come_most_used_first(app: FastAPI) -> None:
+    from lodestar.adapters.db.transactions_repo import TransactionRepository
+
+    seed(
+        app,
+        line("a", "🍝 Ristoranti", "Pizzeria"),
+        line("b", "🍝 Ristoranti", "Caffè"),
+        line("c", "🍝 Ristoranti", "Caffè"),
+        line("d", "🍝 Ristoranti", None),
+        line("e", "🥦 Spesa", "Mercato"),
+    )
+    used = TransactionRepository(app.state.engine).used_subcategories()
+    assert used == {"🍝 Ristoranti": ["Caffè", "Pizzeria"], "🥦 Spesa": ["Mercato"]}

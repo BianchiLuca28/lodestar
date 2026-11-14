@@ -180,7 +180,7 @@ def with_altro() -> ParseContext:
 def test_no_subcategory_is_saved_as_altro_when_the_category_has_it() -> None:
     fake = model({"lines": [line(subcategory=None), line(category="❓ Varie", subcategory=None)]})
     result = parse_message(fake, with_altro(), "pizza 50, varie 3", SENT)
-    assert [r.subcategory for r in result.lines] == ["Altro", None]
+    assert [r.subcategory for r in result.lines] == ["Altro", "Altro"]  # Varie: free list
     assert result.review_note is None
 
 
@@ -203,3 +203,41 @@ def test_the_prompt_teaches_the_words_for_money_coming_back() -> None:
     system = str(fake.prompts[0][0].content)
     for word in ('"ritorno', '"storno', '"rimborso', '"da <person>'):
         assert word in system
+
+
+def test_subcategories_used_in_the_past_are_listed_most_used_first() -> None:
+    ctx = context().with_subcategories(
+        {"❓ Varie": ["Regalini", "Multe"], "🍝 Ristoranti": ["Sushi"]}
+    )
+    fake = model({"lines": [line()]})
+    parse_message(fake, ctx, "pizza 50", SENT)
+    system = str(fake.prompts[0][0].content)
+    assert "- ❓ Varie: Regalini, Multe" in system
+    assert "- 🍝 Ristoranti: Sushi, Trattoria, Pizzeria, Aperitivo, Caffè" in system
+
+
+def with_amazon() -> ParseContext:
+    from dataclasses import replace
+
+    from lodestar.domain.ledger import Catalog
+
+    ctx = context()
+    categories = {**ctx.catalog.categories, "📦 Amazon": frozenset({"Altro"})}
+    return replace(
+        ctx,
+        catalog=Catalog(ctx.catalog.accounts, categories),
+        categories=[*ctx.categories, ("📦 Amazon", ["Altro"])],
+    )
+
+
+def test_purchases_on_amazon_go_under_the_amazon_category() -> None:
+    fake = model({"lines": [line()]})
+    parse_message(fake, with_amazon(), "amazon cavo ethernet 3,99", SENT)
+    system = str(fake.prompts[0][0].content)
+    assert 'bought on Amazon goes under "📦 Amazon"' in system
+
+
+def test_no_amazon_rule_without_an_amazon_category() -> None:
+    fake = model({"lines": [line()]})
+    parse_message(fake, context(), "pizza 50", SENT)
+    assert "bought on Amazon" not in str(fake.prompts[0][0].content)

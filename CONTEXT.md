@@ -61,7 +61,7 @@ One or more proposed transactions produced from an inbound message, a bank impor
 _Avoid_: suggestion, pending transaction
 
 **Fallback subcategory**:
-The subcategory “Altro”, used when no more specific subcategory fits and the category has one; otherwise the subcategory stays empty.
+The subcategory “Altro”, used when no more specific subcategory fits and the category allows it (lists “Altro” or lists no subcategories); otherwise the subcategory stays empty.
 _Avoid_: default, generic
 
 **Date words** (_Parole della data_):
