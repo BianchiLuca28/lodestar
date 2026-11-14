@@ -12,6 +12,7 @@ output is a *draft*: the user reads every line, fixes or deletes it, and saves i
 import argparse
 import random
 import sqlite3
+import sys
 from collections import defaultdict
 from contextlib import closing
 from dataclasses import dataclass
@@ -30,6 +31,7 @@ from lodestar.domain.dates import MONTHS, resolve_date
 PROMPT_PATH = Path(__file__).parents[1] / "prompts" / "eval_message.md"
 REPO_ROOT = Path(__file__).resolve().parents[5]
 SENT_TIME = time(21, 0)  # evening of the send day
+ATTEMPTS = 3  # tries per row before it is skipped
 LATE_SHARE = 0.3  # cases "sent" 1-6 days after the transaction, whose message must say when
 WEEKDAY_WORDS = ("lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica")
 
@@ -108,6 +110,15 @@ def _prompt(row: Row, config: AppConfig, when: str) -> str:
     )
 
 
+def _write_message(model: BaseChatModel, prompt: str) -> str | None:
+    """The model's message, retried when it comes back empty (gpt-oss sometimes does)."""
+    for _ in range(ATTEMPTS):
+        text = str(model.invoke([HumanMessage(content=prompt)]).content).strip().strip('"').strip()
+        if text:
+            return text
+    return None
+
+
 def generate(
     model: BaseChatModel, config: AppConfig, db: Path, n: int, seed: int = 0
 ) -> list[Case]:
@@ -124,7 +135,10 @@ def generate(
                 f' using exactly these words: "{words}".'
             )
         prompt = _prompt(row, config, when)
-        message = str(model.invoke([HumanMessage(content=prompt)]).content).strip()
+        message = _write_message(model, prompt)
+        if message is None:
+            print(f"skipped row {row.id}: the model gave no message", file=sys.stderr)
+            continue
         expected = Line(
             date=row.date,
             amount=Decimal(row.amount_cents) / 100,
@@ -138,7 +152,7 @@ def generate(
         cases.append(
             Case(
                 id=f"real-{row.id}",
-                message=message.strip('"'),
+                message=message,
                 sent_at=datetime.combine(sent, SENT_TIME, zone),
                 source_id=row.id,
                 trip=row.tag,

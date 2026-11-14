@@ -131,3 +131,16 @@ def test_private_runs_put_the_report_next_to_their_results() -> None:
 
     assert misses_path(private=True) == PRIVATE_RESULTS / "misses.md"
     assert misses_path(private=False) is None
+
+
+def test_a_case_with_an_empty_message_is_rejected_by_name(tmp_path: Path) -> None:
+    path = tmp_path / "cases.jsonl"
+    good = (
+        '{"id": "ok", "message": "pane 3", "sent_at": "2026-11-05T10:00:00+01:00", "expected": []}'
+    )
+    bad = (
+        '{"id": "real-42", "message": " ", "sent_at": "2026-11-05T10:00:00+01:00", "expected": []}'
+    )
+    path.write_text(good + "\n" + bad + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="real-42"):
+        load_cases(path)
