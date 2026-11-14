@@ -21,6 +21,7 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
 from lodestar.adapters.db.examples_index import Example
+from lodestar.ai.retrieval import search_text
 from lodestar.ai.schemas import Extraction, ProposedLine
 from lodestar.config.catalog import catalog_of
 from lodestar.config.models import AppConfig
@@ -167,7 +168,7 @@ def build_graph(  # type: ignore[no-untyped-def]
         examples: list[Example] = []
         if retriever is not None:
             try:
-                examples = list(retriever(state["text"]))[:EXAMPLES]
+                examples = list(retriever(search_text(state["text"])))[:EXAMPLES]
             except Exception:  # the parser still works without examples
                 log.warning("example retrieval failed; parsing without examples", exc_info=True)
         system = SystemMessage(content=_system_prompt(ctx, state["today"], examples))

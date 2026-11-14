@@ -50,19 +50,20 @@ class ExampleIndex:
             conn.close()
 
     def sync(self) -> int:
-        """Embed every transaction with a note that has no vector for the current model."""
+        """Embed every note with letters that has no vector ("32.99" teaches nothing)."""
         with self._connect() as conn:
             # Stale vectors: another embedding model, or a note edited after it was embedded.
             # Category and accounts are read live from `transactions`, so edits there need nothing.
             conn.execute(
-                "DELETE FROM transaction_embeddings WHERE model != ? OR text IS NOT"
+                "DELETE FROM transaction_embeddings WHERE model != ?"
+                " OR text NOT GLOB '*[A-Za-z]*' OR text IS NOT"
                 " (SELECT note FROM transactions t WHERE t.id = transaction_id)",
                 (self._model,),
             )
             rows = conn.execute(
                 "SELECT t.id, t.note FROM transactions t"
                 " LEFT JOIN transaction_embeddings e ON e.transaction_id = t.id"
-                " WHERE e.transaction_id IS NULL AND trim(coalesce(t.note, '')) != ''"
+                " WHERE e.transaction_id IS NULL AND t.note GLOB '*[A-Za-z]*'"
                 " ORDER BY t.id"
             ).fetchall()
             for start in range(0, len(rows), BATCH):

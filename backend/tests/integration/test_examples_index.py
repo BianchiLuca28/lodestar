@@ -195,3 +195,10 @@ def test_editing_a_note_in_movimenti_updates_the_index(ledger: FastAPI) -> None:
     response = TestClient(ledger).patch("/api/transactions/3", json={"note": "Pam Panorama"})
     assert response.status_code == 200
     assert ledger.state.examples.nearest("pam panorama", k=1)[0].note == "Pam Panorama"
+
+
+def test_notes_without_letters_are_not_examples(app: FastAPI) -> None:
+    seed(app, line("32.99", "🎬 Svago", None), line("Zi Nenè"))
+    index = ExampleIndex(app.state.db_path, HashingEmbedder(), "fake")
+    assert index.sync() == 1
+    assert [e.note for e in index.nearest("30", k=5)] == ["Zi Nenè"]

@@ -150,7 +150,7 @@ def test_retrieved_examples_are_in_the_prompt() -> None:
     fake = model({"lines": [line()]})
     parse_message(fake, context(), "zi nene 30", SENT, retriever)
     system = str(fake.prompts[0][0].content)
-    assert seen == ["zi nene 30"]
+    assert seen == ["zi nene"]  # the amount is not part of the search
     assert '"Zi Nenè" → category "🍝 Ristoranti", subcategory "Pizzeria"' in system
     assert system.count('"Zi Nenè" →') == 5
 
