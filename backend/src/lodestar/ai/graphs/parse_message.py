@@ -116,6 +116,18 @@ def _examples_block(examples: Sequence[Example], catalog: Catalog) -> str:
     return "\n".join(rows)
 
 
+def _store_rules(ctx: ParseContext) -> str:
+    """The user's rule (14/11/2026): whatever is bought on Amazon goes under the Amazon category."""
+    amazon = next((name for name, _ in ctx.categories if "amazon" in name.lower()), None)
+    if amazon is None:
+        return ""
+    return (
+        f'Anything bought on Amazon goes under "{amazon}", whatever the item (a cable, clothes,'
+        ' a gift); the message usually says "amazon". A subscription such as Amazon Prime'
+        " is not a purchase and keeps its subscription category."
+    )
+
+
 def _system_prompt(ctx: ParseContext, today: date, examples: Sequence[Example] = ()) -> str:
     trip = (
         f'A trip is active: set tag "{ctx.trip_tag}" on every line'
@@ -134,6 +146,7 @@ def _system_prompt(ctx: ParseContext, today: date, examples: Sequence[Example] =
         ),
         trip=trip,
         examples=_examples_block(examples, ctx.catalog),
+        store_rules=_store_rules(ctx),
     )
 
 

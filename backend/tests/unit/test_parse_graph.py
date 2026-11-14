@@ -214,3 +214,30 @@ def test_subcategories_used_in_the_past_are_listed_most_used_first() -> None:
     system = str(fake.prompts[0][0].content)
     assert "- ❓ Varie: Regalini, Multe" in system
     assert "- 🍝 Ristoranti: Sushi, Trattoria, Pizzeria, Aperitivo, Caffè" in system
+
+
+def with_amazon() -> ParseContext:
+    from dataclasses import replace
+
+    from lodestar.domain.ledger import Catalog
+
+    ctx = context()
+    categories = {**ctx.catalog.categories, "📦 Amazon": frozenset({"Altro"})}
+    return replace(
+        ctx,
+        catalog=Catalog(ctx.catalog.accounts, categories),
+        categories=[*ctx.categories, ("📦 Amazon", ["Altro"])],
+    )
+
+
+def test_purchases_on_amazon_go_under_the_amazon_category() -> None:
+    fake = model({"lines": [line()]})
+    parse_message(fake, with_amazon(), "amazon cavo ethernet 3,99", SENT)
+    system = str(fake.prompts[0][0].content)
+    assert 'bought on Amazon goes under "📦 Amazon"' in system
+
+
+def test_no_amazon_rule_without_an_amazon_category() -> None:
+    fake = model({"lines": [line()]})
+    parse_message(fake, context(), "pizza 50", SENT)
+    assert "bought on Amazon" not in str(fake.prompts[0][0].content)

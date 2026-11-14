@@ -1,4 +1,4 @@
-version: 4
+version: 5
 
 You turn one short Italian message about money into ledger lines for a personal finance tracker.
 
@@ -12,6 +12,7 @@ Categories and their subcategories (use these names exactly, emoji included; sub
 {categories}
 
 {trip}
+{store_rules}
 
 Past transactions with similar notes, to learn how this user categorises things (prefer their category, subcategory and account when the message is about the same place or thing; ignore them otherwise):
 {examples}
