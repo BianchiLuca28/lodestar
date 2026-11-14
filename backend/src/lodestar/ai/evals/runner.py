@@ -23,6 +23,7 @@ from lodestar.ai.evals.schema import Case, load_cases
 if TYPE_CHECKING:
     from lodestar.adapters.db.examples_index import ExampleIndex
     from lodestar.adapters.embeddings import Embedder
+    from lodestar.domain.ledger import Catalog
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 DEFAULT_DATASET = REPO_ROOT / "evals" / "datasets" / "parsing" / "cases.jsonl"
@@ -99,6 +100,29 @@ def run(
     return path, _table(metrics, before)
 
 
+def with_subcategory_rule(cases: Sequence[Case], catalog: "Catalog") -> list[Case]:
+    """Expected lines judged by the user's rule: no specific subcategory means "Altro"."""
+    from lodestar.domain.ledger import default_subcategory
+
+    return [
+        case.model_copy(
+            update={
+                "expected": [
+                    line.model_copy(
+                        update={
+                            "subcategory": default_subcategory(
+                                line.category, line.subcategory, catalog
+                            )
+                        }
+                    )
+                    for line in case.expected
+                ]
+            }
+        )
+        for case in cases
+    ]
+
+
 def misses_path(private: bool) -> Path | None:
     """Only private runs get a misses report, in their git-ignored results folder."""
     return PRIVATE_RESULTS / "misses.md" if private else None
@@ -167,6 +191,10 @@ def main() -> None:
         if args.live:
             examples = not args.no_examples
             predictor = _live(config, args.model, examples, Path(work_dir), args.private)
+            from lodestar.config.catalog import catalog_of
+            from lodestar.config.loader import load_config
+
+            cases = with_subcategory_rule(cases, catalog_of(load_config(config)))
         misses = misses_path(args.private)
         path, table = run(
             cases, predictor, results, date.today(), compare=args.compare, misses=misses
