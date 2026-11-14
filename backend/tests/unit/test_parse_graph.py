@@ -180,7 +180,7 @@ def with_altro() -> ParseContext:
 def test_no_subcategory_is_saved_as_altro_when_the_category_has_it() -> None:
     fake = model({"lines": [line(subcategory=None), line(category="❓ Varie", subcategory=None)]})
     result = parse_message(fake, with_altro(), "pizza 50, varie 3", SENT)
-    assert [r.subcategory for r in result.lines] == ["Altro", None]
+    assert [r.subcategory for r in result.lines] == ["Altro", "Altro"]  # Varie: free list
     assert result.review_note is None
 
 

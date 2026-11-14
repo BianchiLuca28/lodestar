@@ -164,4 +164,4 @@ def test_expected_lines_follow_the_altro_rule() -> None:
         }
     )
     [fixed] = with_subcategory_rule([case], catalog)
-    assert [ln.subcategory for ln in fixed.expected] == ["Altro", None]
+    assert [ln.subcategory for ln in fixed.expected] == ["Altro", "Altro"]  # free list too
