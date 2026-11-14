@@ -11,6 +11,7 @@ output is a *draft*: the user reads every line, fixes or deletes it, and saves i
 
 import argparse
 import random
+import re
 import sqlite3
 import sys
 from collections import defaultdict
@@ -31,6 +32,8 @@ from lodestar.domain.dates import MONTHS, resolve_date
 PROMPT_PATH = Path(__file__).parents[1] / "prompts" / "eval_message.md"
 REPO_ROOT = Path(__file__).resolve().parents[5]
 SENT_TIME = time(21, 0)  # evening of the send day
+TRIP_PREFIX = "vacanza"  # the user's trip tags; other tags are bookkeeping (14/11/2026)
+BOOKKEEPING = ("stato iniziale", "saldo iniziale", "ricalcolo")  # rows nobody texts
 ATTEMPTS = 3  # tries per row before it is skipped
 LATE_SHARE = 0.3  # cases "sent" 1-6 days after the transaction, whose message must say when
 WEEKDAY_WORDS = ("lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica")
@@ -49,8 +52,22 @@ class Row:
     tag: str | None
 
 
+def is_trip(tag: str | None) -> bool:
+    return tag is not None and tag.strip().lower().startswith(TRIP_PREFIX)
+
+
+def worth_a_message(row: "Row") -> bool:
+    """A row the user would have texted the bot: a note with words, no bookkeeping."""
+    note = (row.note or "").lower()
+    if not re.search(r"[^\W\d_]", note):
+        return False
+    if any(word in note for word in BOOKKEEPING):
+        return False
+    return row.tag is None or is_trip(row.tag)
+
+
 def sample_rows(db: Path, n: int, seed: int = 0) -> list[Row]:
-    """n rows, at least one per category, the rest proportional to category size."""
+    """n rows worth a message, at least one per category, the rest proportional to size."""
     with closing(sqlite3.connect(db)) as conn:  # `with conn` alone never closes it
         rows = [
             Row(r[0], date.fromisoformat(r[1]), *r[2:])
@@ -60,6 +77,7 @@ def sample_rows(db: Path, n: int, seed: int = 0) -> list[Row]:
                 " WHERE source != 'adjustment' ORDER BY id"
             )
         ]
+    rows = [row for row in rows if worth_a_message(row)]
     rng = random.Random(seed)
     by_category: dict[str, list[Row]] = defaultdict(list)
     for row in rows:
@@ -104,7 +122,7 @@ def _prompt(row: Row, config: AppConfig, when: str) -> str:
         trip=(
             f'Trip: it is tagged "{row.tag}"; mention the trip naturally (the place, or'
             ' "in vacanza") so the tag can be inferred.'
-            if row.tag
+            if is_trip(row.tag)
             else ""
         ),
     )
@@ -155,7 +173,7 @@ def generate(
                 message=message,
                 sent_at=datetime.combine(sent, SENT_TIME, zone),
                 source_id=row.id,
-                trip=row.tag,
+                trip=row.tag if is_trip(row.tag) else None,
                 expected=[expected],
             )
         )

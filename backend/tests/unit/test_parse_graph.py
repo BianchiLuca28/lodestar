@@ -150,7 +150,7 @@ def test_retrieved_examples_are_in_the_prompt() -> None:
     fake = model({"lines": [line()]})
     parse_message(fake, context(), "zi nene 30", SENT, retriever)
     system = str(fake.prompts[0][0].content)
-    assert seen == ["zi nene 30"]
+    assert seen == ["zi nene"]  # the amount is not part of the search
     assert '"Zi Nenè" → category "🍝 Ristoranti", subcategory "Pizzeria"' in system
     assert system.count('"Zi Nenè" →') == 5
 
@@ -163,3 +163,43 @@ def test_a_failing_retriever_parses_without_examples() -> None:
     result = parse_message(fake, context(), "pizza 50", SENT, broken)
     assert result.review_note is None
     assert "No past examples" in str(fake.prompts[0][0].content)
+
+
+def with_altro() -> ParseContext:
+    from dataclasses import replace
+
+    from lodestar.domain.ledger import Catalog
+
+    ctx = context()
+    categories = dict(ctx.catalog.categories)
+    categories["🍝 Ristoranti"] = categories["🍝 Ristoranti"] | {"Altro"}
+    cats = [(n, [*s, "Altro"] if n == "🍝 Ristoranti" else s) for n, s in ctx.categories]
+    return replace(ctx, catalog=Catalog(ctx.catalog.accounts, categories), categories=cats)
+
+
+def test_no_subcategory_is_saved_as_altro_when_the_category_has_it() -> None:
+    fake = model({"lines": [line(subcategory=None), line(category="❓ Varie", subcategory=None)]})
+    result = parse_message(fake, with_altro(), "pizza 50, varie 3", SENT)
+    assert [r.subcategory for r in result.lines] == ["Altro", None]
+    assert result.review_note is None
+
+
+def test_examples_without_a_subcategory_are_shown_with_altro() -> None:
+    from lodestar.adapters.db.examples_index import Example
+
+    def retriever(text: str) -> list[Example]:
+        return [Example("Zi Nenè", "🍝 Ristoranti", None, "Banca Aurora", None)]
+
+    fake = model({"lines": [line()]})
+    parse_message(fake, with_altro(), "zi nene 30", SENT, retriever)
+    assert '"Zi Nenè" → category "🍝 Ristoranti", subcategory "Altro"' in str(
+        fake.prompts[0][0].content
+    )
+
+
+def test_the_prompt_teaches_the_words_for_money_coming_back() -> None:
+    fake = model({"lines": [line()]})
+    parse_message(fake, context(), "ritorno pub sofia 15", SENT)
+    system = str(fake.prompts[0][0].content)
+    for word in ('"ritorno', '"storno', '"rimborso', '"da <person>'):
+        assert word in system

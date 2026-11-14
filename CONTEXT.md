@@ -60,11 +60,15 @@ The cloud queue that holds inbound messages until the user's PC collects them.
 One or more proposed transactions produced from an inbound message, a bank import or a receipt, waiting for the user to approve, edit or reject. Only approval turns a draft into transactions.
 _Avoid_: suggestion, pending transaction
 
+**Fallback subcategory**:
+The subcategory “Altro”, used when no more specific subcategory fits and the category has one; otherwise the subcategory stays empty.
+_Avoid_: default, generic
+
 **Date words** (_Parole della data_):
 The words of a message that say when something happened ("ieri", "giovedì", "il 2 novembre"). The parser copies them verbatim; code turns them into a date relative to the message's send day.
 
 **Example index**:
-Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and updated on every approval.
+Embeddings of past transactions' notes, searched to give the parser the 5 most similar past transactions as few-shot examples. A rebuildable cache of the ledger: filled from existing transactions and kept in step with every approval and every later edit, so corrections become the parser's habits.
 _Avoid_: memory, training data
 
 **Possible duplicate** (_Possibile duplicato_):

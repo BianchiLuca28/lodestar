@@ -72,3 +72,9 @@ def test_loose_note_ignores_case_accents_and_extra_words(
     result = score([([line(note=expected)], [line(note=predicted)])])
     assert result["note_loose"] == (1.0 if hit else 0.0)
     assert result["field.note"] in (0.0, 1.0)  # exact match is kept alongside
+
+
+def test_a_predicted_note_is_fine_when_the_row_had_none() -> None:
+    result = score([([line(note=None)], [line(note="benzina")])])
+    assert result["note_loose"] == 1.0
+    assert result["field.note"] == 0.0  # the exact metric still tells them apart

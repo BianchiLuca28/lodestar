@@ -1,7 +1,8 @@
 """One inbound message → proposed ledger lines (design §6.1).
 
-context → retrieve examples → extract → resolve dates → validate → (retry once) → finish.
-The LLM copies the date words; code turns them into a date (domain/dates.py).
+context → retrieve examples → extract → resolve → validate → (retry once) → finish.
+The LLM copies the date words; `resolve` turns them into a date (domain/dates.py) and applies
+the subcategory rule (no specific subcategory → "Altro", when the category has one).
 The LLM only extracts; every check is code. A second failure still yields lines, with a
 review note, so the user decides in the Inbox (drafts first, invariant 1).
 """
@@ -21,12 +22,13 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
 from lodestar.adapters.db.examples_index import Example
+from lodestar.ai.retrieval import search_text
 from lodestar.ai.schemas import Extraction, ProposedLine
 from lodestar.config.catalog import catalog_of
 from lodestar.config.models import AppConfig
 from lodestar.domain.dates import resolve_date
 from lodestar.domain.errors import FieldError
-from lodestar.domain.ledger import Catalog, LineInput, validate_line
+from lodestar.domain.ledger import Catalog, LineInput, default_subcategory, validate_line
 
 PROMPT_PATH = Path(__file__).parents[1] / "prompts" / "parse_message.md"
 MAX_ATTEMPTS = 2
@@ -90,12 +92,16 @@ class State(TypedDict, total=False):
     attempts: int
 
 
-def _examples_block(examples: Sequence[Example]) -> str:
+def _examples_block(examples: Sequence[Example], catalog: Catalog) -> str:
     if not examples:
         return "No past examples are available."
     rows = [
         f'- "{e.note}" → category "{e.category}", subcategory '
-        + (f'"{e.subcategory}"' if e.subcategory else "null")
+        + (
+            f'"{sub}"'
+            if (sub := default_subcategory(e.category, e.subcategory, catalog))
+            else "null"
+        )
         + f", from {e.from_account or 'null'}, to {e.to_account or 'null'}"
         for e in examples
     ]
@@ -119,13 +125,13 @@ def _system_prompt(ctx: ParseContext, today: date, examples: Sequence[Example] =
             for name, subs in ctx.categories
         ),
         trip=trip,
-        examples=_examples_block(examples),
+        examples=_examples_block(examples, ctx.catalog),
     )
 
 
 def to_line_input(line: ProposedLine) -> LineInput:
     return LineInput(
-        date=line.date or date.min,  # always set by resolve_dates before this runs
+        date=line.date or date.min,  # always set by `resolve` before this runs
         amount=line.amount,
         from_account=line.from_account or None,
         to_account=line.to_account or None,
@@ -167,7 +173,7 @@ def build_graph(  # type: ignore[no-untyped-def]
         examples: list[Example] = []
         if retriever is not None:
             try:
-                examples = list(retriever(state["text"]))[:EXAMPLES]
+                examples = list(retriever(search_text(state["text"])))[:EXAMPLES]
             except Exception:  # the parser still works without examples
                 log.warning("example retrieval failed; parsing without examples", exc_info=True)
         system = SystemMessage(content=_system_prompt(ctx, state["today"], examples))
@@ -189,7 +195,7 @@ def build_graph(  # type: ignore[no-untyped-def]
             }
         return {"messages": messages, "lines": lines, "errors": [], "attempts": attempts}
 
-    def resolve_dates(state: State) -> State:
+    def resolve(state: State) -> State:
         today, notes = state["today"], []
         lines = []
         for number, line in enumerate(state["lines"], start=1):
@@ -200,7 +206,8 @@ def build_graph(  # type: ignore[no-untyped-def]
                     f" set to {today}, check it"
                 )
                 resolved = today
-            lines.append(line.model_copy(update={"date": resolved}))
+            sub = default_subcategory(line.category, line.subcategory, ctx.catalog)
+            lines.append(line.model_copy(update={"date": resolved, "subcategory": sub}))
         return {"lines": lines, "date_notes": notes}
 
     def validate(state: State) -> State:
@@ -223,13 +230,13 @@ def build_graph(  # type: ignore[no-untyped-def]
     graph = StateGraph(State)
     graph.add_node("retrieve", retrieve)
     graph.add_node("extract", extract)
-    graph.add_node("resolve_dates", resolve_dates)
+    graph.add_node("resolve", resolve)
     graph.add_node("validate", validate)
     graph.add_node("retry", retry)
     graph.add_edge(START, "retrieve")
     graph.add_edge("retrieve", "extract")
-    graph.add_edge("extract", "resolve_dates")
-    graph.add_edge("resolve_dates", "validate")
+    graph.add_edge("extract", "resolve")
+    graph.add_edge("resolve", "validate")
     graph.add_conditional_edges("validate", route, {"retry": "retry", END: END})
     graph.add_edge("retry", "extract")
     return graph.compile()

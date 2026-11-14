@@ -30,10 +30,13 @@ def _words(text: str | None) -> set[str]:
 
 
 def note_matches(expected: str | None, predicted: str | None) -> bool:
-    """Loose note match: same words ignoring case and accents, or one inside the other."""
+    """Loose note match: same words ignoring case and accents, one inside the other, or no
+    expected note at all."""
     exp, pred = _words(expected), _words(predicted)
-    if not exp or not pred:
-        return exp == pred
+    if not exp:  # the past row had no note: any note the parser writes is fine
+        return True
+    if not pred:
+        return False
     return exp <= pred or pred <= exp
 
 

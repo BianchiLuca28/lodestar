@@ -144,3 +144,24 @@ def test_a_case_with_an_empty_message_is_rejected_by_name(tmp_path: Path) -> Non
     path.write_text(good + "\n" + bad + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="real-42"):
         load_cases(path)
+
+
+def test_expected_lines_follow_the_altro_rule() -> None:
+    from lodestar.ai.evals.runner import with_subcategory_rule
+    from lodestar.domain.ledger import Catalog
+
+    catalog = Catalog(frozenset({"A"}), {"Regali": frozenset({"Altro"}), "Varie": frozenset()})
+    sent = "2026-11-05T10:00:00+01:00"
+    case = Case.model_validate(
+        {
+            "id": "x",
+            "message": "m",
+            "sent_at": sent,
+            "expected": [
+                {"date": "2026-11-05", "amount": "1", "from_account": "A", "category": "Regali"},
+                {"date": "2026-11-05", "amount": "1", "from_account": "A", "category": "Varie"},
+            ],
+        }
+    )
+    [fixed] = with_subcategory_rule([case], catalog)
+    assert [ln.subcategory for ln in fixed.expected] == ["Altro", None]
