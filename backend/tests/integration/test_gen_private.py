@@ -1,6 +1,7 @@
 import re
 import sqlite3
 from collections import Counter
+from contextlib import closing
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -124,3 +125,27 @@ def test_a_row_that_stays_empty_is_skipped(tmp_path: Path) -> None:
     model = GenericFakeChatModel(messages=iter(AIMessage(content=a) for a in answers))
     cases = generate(model, load_config(EXAMPLE), db, 2, seed=0)
     assert [c.message for c in cases] == ["msg b"]
+
+
+def test_only_rows_worth_a_message_are_sampled(tmp_path: Path) -> None:
+    db = fake_ledger_db(EXAMPLE, tmp_path)
+    skipped = [
+        (None, None),  # no note: nothing to write a message about
+        ("32.99", None),  # a note without words
+        ("Stato iniziale conto Aurora", None),  # bookkeeping
+        ("Ricalcolo conto bancario", None),
+        ("Spesa", "Ricalcolo fondo - 2026"),  # a tag that is not a trip
+    ]
+    with closing(sqlite3.connect(db)) as conn:
+        for note, tag in skipped:
+            conn.execute(
+                "INSERT INTO transactions (date, amount_cents, from_account, category, note, tag,"
+                " exclude_from_stats, source, created_at)"
+                " VALUES ('2026-03-01', 98765431, 'Banca Aurora', '❓ Varie', ?, ?, 0, 'manual',"
+                " '2026-03-01T10:00:00')",
+                (note, tag),
+            )
+        conn.commit()
+    rows = sample_rows(db, 10_000, seed=0)
+    assert not any(r.amount_cents == 98765431 for r in rows)
+    assert all(r.tag is None or r.tag.lower().startswith("vacanza") for r in rows)
