@@ -220,7 +220,7 @@ A LangGraph graph turns one inbound message into one draft:
 
 1.  **Load context:** today's date, accounts, categories with subcategories, active trip tag, default account (Intesa Sanpaolo; Contanti when the message says “contanti” or similar).
 
-2.  **Retrieve examples:** the 5 most similar past transactions (embedding search over notes and descriptions) as few-shot examples, so “Zi nenè” maps to Pizzeria. The **example index** (`transaction_embeddings`) stores one `bge-m3` vector per transaction with a note, tagged with the embedding model; search is an exact cosine scan with `sqlite-vec`, and near-identical notes with the same category are shown once. It learns from corrections: approval indexes the final (edited) lines, category and accounts are read live from the ledger so later edits count at once, and a later edit of a note re-embeds it. It is backfilled at startup and after each poll. If the embedder is down, parsing goes on without examples.
+2.  **Retrieve examples:** the 5 most similar past transactions (embedding search over notes and descriptions) as few-shot examples, so “Zi nenè” maps to Pizzeria. The **example index** (`transaction_embeddings`) stores one `bge-m3` vector per transaction with a note, tagged with the embedding model; search is an exact cosine scan with `sqlite-vec`, and near-identical notes with the same category are shown once. It learns from corrections: approval indexes the final (edited) lines, category and accounts are read live from the ledger so later edits count at once, and a later edit of a note re-embeds it. It is backfilled at startup and after each poll. The search uses only the message's words: amounts, currency and date words are removed first (“benzina 20,13” searches “benzina”), and notes without letters (“32.99”) are never indexed. If the embedder is down, parsing goes on without examples.
 
 3.  **Extract:** structured output into a Pydantic schema `list[ProposedLine]` (date, amount, from/to account, category, subcategory, note, tag). Category must come from the configured list.
 
@@ -229,6 +229,10 @@ A LangGraph graph turns one inbound message into one draft:
 5.  **Create draft** and notify (web Inbox + Telegram).
 
 6.  **Corrections:** a reply to the draft in Telegram (“no, era contanti”) or an edit in the web app produces a new draft version. Telegram replies go back through step 3 with the previous draft as context.
+
+**Subcategory rule (user's decision, 14/11/2026).** When nothing more specific fits, the subcategory is “Altro” if the category has one, otherwise empty. Code applies it after extraction, to examples shown to the model and to expected lines in the eval. Past rows with an empty subcategory can be cleaned up in Movimenti.
+
+**Incoming money.** The prompt knows the user's words: “ritorno …”, “storno …”, “rimborso …” and “da <persona>” mean money received; “reso a <persona>” means the user paid someone back.
 
 **Dates are computed in code (ADR 0021).**
 - The LLM only copies the date words verbatim into `date_text`.
@@ -306,7 +310,7 @@ A ReAct agent (ADR 0021, guidelines in §6.4) with read-only tools: `get_rule_st
 
 **The eval set is the backbone of every AI change.**
 
-- **Parsing evals:** ~130 Italian messages paired with the exact lines they must produce: ~30 hand-written fake cases in git (split bills, refunds, “ieri”, cash, transfers, trips) and ~100 private cases built from the real rows (`make eval-gen-private` takes a stratified sample, the LLM writes a plausible message for each row, you check every line). Private cases run with leave-one-out retrieval: a case's own row is never one of its few-shot examples. Cases from tagged rows run with trip mode on for that tag. Each private run writes a misses report (git-ignored) whose summary of category confusions holds names only.
+- **Parsing evals:** ~130 Italian messages paired with the exact lines they must produce: ~30 hand-written fake cases in git (split bills, refunds, “ieri”, cash, transfers, trips) and ~100 private cases built from the real rows (`make eval-gen-private` takes a stratified sample, the LLM writes a plausible message for each row, you check every line). Private cases run with leave-one-out retrieval: a case's own row is never one of its few-shot examples. Only rows worth a message are sampled: a note with words, no bookkeeping (“Stato iniziale”, “Ricalcolo”), and either no tag or a trip tag (tags starting with “Vacanza”); trip cases run with trip mode on for that tag. A predicted note counts as right when the past row had none. Each private run writes a misses report (git-ignored) whose summary of category confusions holds names only.
 
 - **Metrics:** exact match per field, line count accuracy, category accuracy, amount accuracy; plus `note_loose` (same words ignoring case and accents, or one inside the other) and `seconds_per_case`. A model comparison is won by category accuracy, with the faster model winning within 3 points (ADR 0020).
 
