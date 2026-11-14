@@ -195,3 +195,11 @@ def test_examples_without_a_subcategory_are_shown_with_altro() -> None:
     assert '"Zi Nenè" → category "🍝 Ristoranti", subcategory "Altro"' in str(
         fake.prompts[0][0].content
     )
+
+
+def test_the_prompt_teaches_the_words_for_money_coming_back() -> None:
+    fake = model({"lines": [line()]})
+    parse_message(fake, context(), "ritorno pub sofia 15", SENT)
+    system = str(fake.prompts[0][0].content)
+    for word in ('"ritorno', '"storno', '"rimborso', '"da <person>'):
+        assert word in system
