@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 
 class Line(BaseModel):
@@ -31,7 +31,23 @@ class Case(BaseModel):
     trip: str | None = None  # trip mode on with this tag, as the app does during a trip
     expected: list[Line]
 
+    @field_validator("message")
+    @classmethod
+    def _not_blank(cls, message: str) -> str:
+        if not message.strip():
+            raise ValueError("the message is empty")
+        return message
+
 
 def load_cases(path: Path) -> list[Case]:
-    lines = path.read_text(encoding="utf-8").splitlines()
-    return [Case.model_validate(json.loads(raw)) for raw in lines if raw.strip()]
+    cases = []
+    for number, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not raw.strip():
+            continue
+        data = json.loads(raw)
+        try:
+            cases.append(Case.model_validate(data))
+        except ValidationError as exc:
+            where = f"{path.name} line {number} (case {data.get('id', '?')})"
+            raise ValueError(f"{where}: {exc}") from exc
+    return cases
